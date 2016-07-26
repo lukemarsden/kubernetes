@@ -107,12 +107,12 @@ node        Ready     1m
 Using weave net and disco (the defaults) to create a
 small 3-node multi-master test cluster
 
-10.0.0.1$ kube init master-and-node 10.0.0.1,10.0.0.2,10.0.0.3
-10.0.0.2$ kube join master-and-node 10.0.0.1,10.0.0.2,10.0.0.3
-10.0.0.3$ kube join master-and-node 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.1$ kubelet init master-and-node 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.2$ kubelet join master-and-node 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.3$ kubelet join master-and-node 10.0.0.1,10.0.0.2,10.0.0.3
 
 
-10.0.0.1$ kube toolbox
+10.0.0.1$ kubelet toolbox
 toolbox$ kubectl get nodes
 NAME        STATUS    AGE
 deadbeef    Ready     1m
@@ -125,26 +125,26 @@ production 9-node test cluster with better resilience
 against 10.0.0.1 failing during bootstrapping
 
 # 3 masters
-10.0.0.1$ kube init master 10.0.0.1,10.0.0.2,10.0.0.3
-10.0.0.2$ kube join master 10.0.0.1,10.0.0.2,10.0.0.3
-10.0.0.3$ kube join master 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.1$ kubelet init master 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.2$ kubelet join master 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.3$ kubelet join master 10.0.0.1,10.0.0.2,10.0.0.3
 
 # 6 nodes
-10.0.0.4$ kube join node 10.0.0.1,10.0.0.2,10.0.0.3
-10.0.0.5$ kube join node 10.0.0.1,10.0.0.2,10.0.0.3
-10.0.0.6$ kube join node 10.0.0.1,10.0.0.2,10.0.0.3
-10.0.0.7$ kube join node 10.0.0.1,10.0.0.2,10.0.0.3
-10.0.0.8$ kube join node 10.0.0.1,10.0.0.2,10.0.0.3
-10.0.0.9$ kube join node 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.4$ kubelet join node 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.5$ kubelet join node 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.6$ kubelet join node 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.7$ kubelet join node 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.8$ kubelet join node 10.0.0.1,10.0.0.2,10.0.0.3
+10.0.0.9$ kubelet join node 10.0.0.1,10.0.0.2,10.0.0.3
 
 
 Using flannel pod network and public discovery service
 
-10.0.0.1$ kube --net=flannel --disco=token init master-and-node
+10.0.0.1$ kubelet --net=flannel --disco=token init master-and-node
 Connecting to discovery.k8s.io...
 Rendezvous token: deadbeef
-10.0.0.2$ kube --net=flannel --disco=token join master-and-node deadbeef
-10.0.0.3$ kube --net=flannel --disco=token join master-and-node deadbeef
+10.0.0.2$ kubelet --net=flannel --disco=token join master-and-node deadbeef
+10.0.0.3$ kubelet --net=flannel --disco=token join master-and-node deadbeef
 ```
 
 See also: [Joe Beda's "K8s the hard way easier"](https://docs.google.com/document/d/1lJ26LmCP-I_zMuqs6uloTgAnHPcuT7kOYtQ7XSgYLMA/edit#heading=h.ilgrv18sg5t) which combines Kelsey's "Kubernetes the hard way" with history of proposed UX at the end (scroll all the way down to the bottom).
