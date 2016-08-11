@@ -19,10 +19,13 @@ package kubelet
 // This file defines state transition functions for kubelet.
 // See: https://github.com/lukemarsden/kubernetes/blob/7e9fe3d4a2d6f3cf4739090b9ffeeb00d85cf365/docs/proposals/cluster-bootstrap-with-gossip.md#kubelet-state-machine
 
+type kubeletInfo struct {
+}
+
 // In the style of Rob Pike
 type stateFn func(*kubeletInfo) stateFn
 
-func (k *kubelet) run() {
+func (k *kubeletInfo) run() {
 	for state := pendingState; state != nil; {
 		state = state(k)
 	}
@@ -30,20 +33,20 @@ func (k *kubelet) run() {
 
 // I am a kubelet just born into the world, blinking in the light, unknowing
 // even of my role in life, whether to be a node or a master, nor who to trust.
-func pendingState() {
+func pendingState(k *kubeletInfo) {
 }
 
 // I am furnished with a hint as to my role, a key, and perhaps, a friend to
 // talk to, especially if I was not made a master.  Try to use the key to find
 // out enough information to start a TLS bootstrap.
-func gossipingState() {
+func gossipingState(k *kubeletInfo) {
 }
 
 // I am performing TLS bootstrap, growing ever stronger and more confident as
 // I locate a trustworthy API server and begin a fine correspondence forthwith.
-func bootstrappingState() {
+func bootstrappingState(k *kubeletInfo) {
 }
 
 // Boom! Whoosh! I am running!
-func runningState() {
+func runningState(k *kubeletInfo) {
 }

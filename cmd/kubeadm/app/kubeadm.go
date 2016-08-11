@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"k8s.io/kubernetes/pkg/kubeadm/cmd"
+	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 )
 
 // TODO add this to hyperkube?

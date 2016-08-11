@@ -40,7 +40,7 @@ func (o *OutOfBandDiscovery) Start() {
 }
 
 func (o *OutOfBandDiscovery) Discover() ([]string, *x509.Certificate, error) {
-	asn1Data, err := ioutil.ReadFile(o.CaCertFile)
+	asn1Data, err := ioutil.ReadFile(o.Discovery.CaCertFile)
 	if err != nil {
 		return []string{}, nil, err
 	}
@@ -49,7 +49,7 @@ func (o *OutOfBandDiscovery) Discover() ([]string, *x509.Certificate, error) {
 	if err != nil {
 		return []string{}, nil, err
 	}
-	return o.ApiServerURLs, caCert, nil
+	return o.Discovery.ApiServerURLs, caCert, nil
 }
 
 type Discovery interface {
