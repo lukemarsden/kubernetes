@@ -34,7 +34,7 @@ func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *co
 	cmds.AddCommand(NewCmdUser(out))
 
 	cmds.PersistentFlags().StringVarP(&config.disco, "discovery", "", "gossip",
-		`which discovery mechanism to use for cluster bootstrap (choose from "gossip", "out-of-band").`)
+		`Discovery mechanism to use for cluster bootstrap (choose from "gossip", "out-of-band").`)
 
 	return cmds
 }
