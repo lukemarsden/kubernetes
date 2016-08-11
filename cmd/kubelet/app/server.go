@@ -515,6 +515,7 @@ func requestCertFromAPIServer(s *options.KubeletServer) error {
 	if err != nil {
 		return fmt.Errorf("unable to request certificate from API server: %v", err)
 	}
+	glog.Infof("Will write the cert to disk...")
 
 	// (4).
 	if err := crypto.WriteCertToPath(s.TLSCertFile, certificate); err != nil {
@@ -528,7 +529,7 @@ func requestCertFromAPIServer(s *options.KubeletServer) error {
 // It returns the API server's issued certificate (pem-encoded) on success.
 // If there is any errors, or the watch timeouts, it returns an error.
 func requestCertificate(client unversionedcertificates.CertificateSigningRequestsGetter, request []byte, defaultTimeoutSeconds int64) (certificate []byte, err error) {
-	res, err := client.CertificateSigningRequests().Create(&certificates.CertificateSigningRequest{
+	csr, err := client.CertificateSigningRequests().Create(&certificates.CertificateSigningRequest{
 		TypeMeta:   unversioned.TypeMeta{Kind: "CertificateSigningRequest"},
 		ObjectMeta: api.ObjectMeta{GenerateName: "csr-"},
 
@@ -539,7 +540,8 @@ func requestCertificate(client unversionedcertificates.CertificateSigningRequest
 		return nil, fmt.Errorf("cannot create certificate signing request: %v", err)
 	}
 
-	defer client.CertificateSigningRequests().Delete(res.Name, nil)
+	defer client.CertificateSigningRequests().Delete(csr.Name, nil)
+	var status certificates.CertificateSigningRequestStatus
 
 	resultCh, err := client.CertificateSigningRequests().Watch(api.ListOptions{
 		Watch:          true,
@@ -550,17 +552,41 @@ func requestCertificate(client unversionedcertificates.CertificateSigningRequest
 		return nil, fmt.Errorf("cannot watch on the certificate signing request: %v", err)
 	}
 
-	var status certificates.CertificateSigningRequestStatus
-	ch := resultCh.ResultChan()
+	csrWait := resultCh.ResultChan()
+
+	csrCheck, err := client.CertificateSigningRequests().Get(csr.Name)
+	if err != nil {
+		glog.Infof("cannot fetch certificate: %v", err)
+	} else {
+		glog.Infof("csrCheck: %#v", csrCheck)
+		status = csrCheck.Status
+		glog.Infof("Possibly got a cert: %#v", status)
+		for _, c := range status.Conditions {
+			if c.Type == certificates.CertificateDenied {
+				return nil, fmt.Errorf("certificate signing request is not approved: %v, %v", c.Reason, c.Message)
+			}
+			if c.Type == certificates.CertificateApproved && status.Certificate != nil {
+				glog.Infof("Got a cert!")
+				return status.Certificate, nil
+			}
+		}
+		if status.Certificate != nil {
+			glog.Infof("Got a cert with missing condition...")
+			return status.Certificate, nil
+		}
+	}
 
 	for {
-		event, ok := <-ch
+		glog.Infof("Waiting for a cert...")
+		event, ok := <-csrWait
 		if !ok {
 			break
 		}
 
 		if event.Type == watch.Modified {
+			glog.Infof("event: %#v", event.Object.(*certificates.CertificateSigningRequest))
 			status = event.Object.(*certificates.CertificateSigningRequest).Status
+			glog.Infof("Possibly got a cert: %#v", status)
 			for _, c := range status.Conditions {
 				if c.Type == certificates.CertificateDenied {
 					return nil, fmt.Errorf("certificate signing request is not approved: %v, %v", c.Reason, c.Message)
@@ -568,6 +594,10 @@ func requestCertificate(client unversionedcertificates.CertificateSigningRequest
 				if c.Type == certificates.CertificateApproved && status.Certificate != nil {
 					return status.Certificate, nil
 				}
+			}
+			if status.Certificate != nil {
+				glog.Infof("Got a cert with missing condition...")
+				return status.Certificate, nil
 			}
 		}
 	}

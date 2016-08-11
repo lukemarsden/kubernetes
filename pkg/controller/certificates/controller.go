@@ -73,9 +73,10 @@ func NewCertificateController(kubeClient clientset.Interface, syncPeriod time.Du
 	}
 
 	cc := &CertificateController{
-		kubeClient: kubeClient,
-		queue:      workqueue.New(),
-		signer:     ca,
+		kubeClient:     kubeClient,
+		queue:          workqueue.New(),
+		signer:         ca,
+		approveAllCSRs: approveAll,
 	}
 
 	// Manage the addition/update of certificate requests
@@ -109,6 +110,7 @@ func NewCertificateController(kubeClient clientset.Interface, syncPeriod time.Du
 		},
 	)
 	cc.syncHandler = cc.maybeSignCertificate
+	glog.V(3).Infof("approveAllCSRs: %s", cc.approveAllCSRs)
 	return cc, nil
 }
 
@@ -168,6 +170,7 @@ func (cc *CertificateController) updateCertificateRequestStatus(csr *certificate
 // cluster CA assets. If successful it will update the CSR approve subresource
 // with the signed certificate.
 func (cc *CertificateController) maybeSignCertificate(key string) error {
+	glog.V(4).Infof("May be we should sign this cert?")
 	startTime := time.Now()
 	defer func() {
 		glog.V(4).Infof("Finished syncing certificate request %q (%v)", key, time.Now().Sub(startTime))
@@ -183,7 +186,9 @@ func (cc *CertificateController) maybeSignCertificate(key string) error {
 	}
 	csr := obj.(*certificates.CertificateSigningRequest)
 
+	glog.V(3).Infof("We could sign this cert...")
 	if cc.approveAllCSRs && !IsCertificateRequestApproved(csr) {
+		glog.V(3).Infof("We shall sign this cert!")
 		csr.Status.Conditions = append(csr.Status.Conditions, certificates.CertificateSigningRequestCondition{
 			Type:    certificates.CertificateApproved,
 			Reason:  "AutoApproved",
