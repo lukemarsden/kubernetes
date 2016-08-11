@@ -17,12 +17,14 @@ limitations under the License.
 package kubeadm
 
 import (
-	"os"
+	"io"
 
 	"github.com/spf13/cobra"
+	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 )
 
 func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *cobra.Command {
+	var discovery string
 	cmds := &cobra.Command{
 		Use:   "kubeadm",
 		Short: "kubeadm: bootstrap a kubernetes cluster.",
@@ -33,7 +35,7 @@ func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *co
 	cmds.AddCommand(NewCmdJoin(out))
 	cmds.AddCommand(NewCmdUser(out))
 
-	cmds.PersistentFlags().StringVarP(&config.disco, "discovery", "", "gossip",
+	cmds.PersistentFlags().StringVarP(&discovery, "discovery", "", "gossip",
 		`Discovery mechanism to use for cluster bootstrap (choose from "gossip", "out-of-band").`)
 
 	return cmds

@@ -17,8 +17,8 @@ limitations under the License.
 package kubelet
 
 import (
-	"crypto"
-	"ioutil"
+	"crypto/x509"
+	"io/ioutil"
 )
 
 type DiscoveryBase struct {

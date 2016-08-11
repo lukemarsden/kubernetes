@@ -17,6 +17,8 @@ limitations under the License.
 package kubeadm
 
 import (
+	"io"
+
 	"github.com/spf13/cobra"
 )
 

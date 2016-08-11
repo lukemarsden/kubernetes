@@ -17,10 +17,12 @@ limitations under the License.
 package kubeadm
 
 import (
+	"io"
+
 	"github.com/spf13/cobra"
 )
 
-func NewCmdJoin(out io.Writer, config *Config) *cobra.Command {
+func NewCmdJoin(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "join",
 		Short: "Run this on other servers to join an existing cluster.",
