@@ -39,7 +39,7 @@ func pendingState() {
 func gossipingState() {
 }
 
-// I am performing TLS bootstrap, growing ever stronger and more confident and
+// I am performing TLS bootstrap, growing ever stronger and more confident as
 // I locate a trustworthy API server and begin a fine correspondence forthwith.
 func bootstrappingState() {
 }
