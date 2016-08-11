@@ -29,18 +29,18 @@ func (k *kubelet) run() {
 }
 
 // I am a kubelet just born into the world, blinking in the light, unknowing
-// even of my role in life, whether to be a node or a master, or who my friends
-// are.
+// even of my role in life, whether to be a node or a master, nor who to trust.
 func pendingState() {
 }
 
-// I am furnished with a hint as to my role and perhaps, a friend to talk to,
-// especially if I was not made a master.  Try to talk to them to find out
-// enough information to start a TLS bootstrap.
+// I am furnished with a hint as to my role, a key, and perhaps, a friend to
+// talk to, especially if I was not made a master.  Try to use the key to find
+// out enough information to start a TLS bootstrap.
 func gossipingState() {
 }
 
-// I am performing TLS bootstrap, growing ever stronger and more confident.
+// I am performing TLS bootstrap, growing ever stronger and more confident and
+// I locate a trustworthy API server and begin a fine correspondence forthwith.
 func bootstrappingState() {
 }
 
