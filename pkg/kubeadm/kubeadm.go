@@ -18,7 +18,7 @@ package kubeadm
 
 import (
 	"encoding/json"
-	"od"
+	"os"
 )
 
 // kubeadm is responsible for writing the following file, which kubelet should
