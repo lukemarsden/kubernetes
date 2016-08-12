@@ -22,15 +22,15 @@ import (
 )
 
 type DiscoveryBase struct {
-	ApiVersion string // 'v1alpha1'
-	Role       string // 'master' or 'node'
+	ApiVersion string `json:"apiVersion"` // 'v1alpha1'
+	Role       string `json:"role"`       // 'master' or 'node'
 }
 
 type OutOfBandDiscovery struct {
 	DiscoveryBase
 	Discovery struct {
-		ApiServerURLs []string
-		CaCertFile    string
+		ApiServerURLs []string `json:"apiServerURLs"`
+		CaCertFile    string   `json:"caCertFile"`
 	}
 }
 
@@ -67,7 +67,7 @@ type Discovery interface {
 type GossipDiscovery struct {
 	DiscoveryBase
 	Discovery struct {
-		Token string
-		Peers []string
+		Token string   `json:"token"`
+		Peers []string `json:"peers"`
 	}
 }

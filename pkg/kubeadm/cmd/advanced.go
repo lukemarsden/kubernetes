@@ -22,11 +22,58 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdInit(out io.Writer) *cobra.Command {
+func NewCmdManual(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "advanced",
-		Short: "Advanced functionality, including out-of-band discovery.",
+		Use:   "manual",
+		Short: "Advanced, less-automated functionality, for power users.",
+		// TODO put example usage in the Long description here
+	}
+	cmd.AddCommand(NewCmdManualBootstrap(out))
+	return cmd
+}
+
+func NewCmdManualBootstrap(out io.Writer, params *BootstrapParams) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "bootstrap",
+		Short: "Manually bootstrap a cluster 'out-of-band'",
+		Long: `Manually bootstrap a cluster 'out-of-band', by generating and distributing a CA
+certificate to all your servers and specifying and (list of) API server URLs.`,
 		Run: func(cmd *cobra.Command, args []string) {
+		},
+	}
+	params.Discovery = kubelet.OutOfBandDiscovery{}
+	cmd.PersistentFlags().StringVarP(&params.Discovery.CACert, "cacertfile", "", "",
+		`Path to a ca cert file in asn1 format. The same ca cert must be distributed to all servers.`)
+	cmd.PersistentFlags().StringVarP(&params.Discovery.ApiServerURLs, "apiserverurls", "", "",
+		`Comma separated list of API server URLs. Typically this might be just https://<address-of-master>:8080/`)
+	return cmd
+}
+
+func NewCmdManualBootstrapMaster(out io.Writer, params *BootstrapParams) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "node",
+		Short: "Manually bootstrap a node 'out-of-band'",
+
+		Run: func(cmd *cobra.Command, args []string) {
+			err := writeParamsIfNotExists(params)
+			if err != nil {
+				out.Write(fmt.Sprintf("Unable to write config for master:\n%s\n", err))
+			}
+		},
+	}
+	return cmd
+}
+
+func NewCmdManualBootstrapNode(out io.Writer, params *BootstrapParams) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "node",
+		Short: "Manually bootstrap a node 'out-of-band'",
+
+		Run: func(cmd *cobra.Command, args []string) {
+			err := writeParamsIfNotExists(params)
+			if err != nil {
+				out.Write(fmt.Sprintf("Unable to write config for node:\n%s\n", err))
+			}
 		},
 	}
 	return cmd

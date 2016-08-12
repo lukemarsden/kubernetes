@@ -21,7 +21,14 @@ import (
 
 	"github.com/spf13/cobra"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
+	"k8s.io/kubernetes/pkg/kubelet"
 )
+
+type BootstrapParams struct {
+	// A struct with methods that implement Start() and Discover()
+	// kubeadm will persist this struct to disk and kubelet will read it.
+	Discovery kubelet.Discovery
+}
 
 func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *cobra.Command {
 	var discovery string
@@ -48,11 +55,14 @@ Example usage:
 	node# kubeadm join node --token=<token> <ip-of-master>
 `,
 	}
+	// TODO also print the alpha warning when running any commands, as well as
+	// in the help text.
 
-	cmds.AddCommand(NewCmdInit(out))
-	cmds.AddCommand(NewCmdJoin(out))
-	cmds.AddCommand(NewCmdUser(out))
-	cmds.AddCommand(NewCmdAdvanced(out))
+	bootstrapParams := &BootstrapParams{}
+	cmds.AddCommand(NewCmdInit(out, bootstrapParams))
+	cmds.AddCommand(NewCmdJoin(out, bootstrapParams))
+	cmds.AddCommand(NewCmdUser(out, bootstrapParams))
+	cmds.AddCommand(NewCmdManual(out, bootstrapParams))
 
 	return cmds
 }
