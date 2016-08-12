@@ -16,6 +16,10 @@ limitations under the License.
 
 package kubelet
 
+import (
+	"time"
+)
+
 // This file defines state transition functions for kubelet.
 // See: https://github.com/lukemarsden/kubernetes/blob/7e9fe3d4a2d6f3cf4739090b9ffeeb00d85cf365/docs/proposals/cluster-bootstrap-with-gossip.md#kubelet-state-machine
 
@@ -31,10 +35,19 @@ func (k *kubeletInfo) run() {
 	}
 }
 
+func fileExists() bool {
+	return false
+}
+
 // I am a kubelet just born into the world, blinking in the light, unknowing
 // even of my role in life, whether to be a node or a master, nor who to trust.
 func pendingState(k *kubeletInfo) stateFn {
-	return pendingState
+	for {
+		if fileExists() {
+			return learningState
+		}
+		time.Sleep(1 * time.Second)
+	}
 }
 
 // I am furnished with a hint as to my role, a key, and perhaps, a friend to
