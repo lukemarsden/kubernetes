@@ -19,6 +19,7 @@ package kubelet
 import (
 	"crypto/x509"
 	"io/ioutil"
+	"strings"
 )
 
 type DiscoveryBase struct {
@@ -47,7 +48,7 @@ func (o OutOfBandDiscovery) Discover() ([]string, *x509.Certificate, error) {
 	if err != nil {
 		return []string{}, nil, err
 	}
-	return o.ApiServerURLs, caCert, nil
+	return strings.Split(o.ApiServerURLs, ","), caCert, nil
 }
 
 type Discovery interface {

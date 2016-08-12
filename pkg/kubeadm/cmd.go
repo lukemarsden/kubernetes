@@ -31,7 +31,6 @@ type BootstrapParams struct {
 }
 
 func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *cobra.Command {
-	var discovery string
 	cmds := &cobra.Command{
 		Use:   "kubeadm",
 		Short: "kubeadm: bootstrap a secure kubernetes cluster easily.",
