@@ -28,10 +28,8 @@ type DiscoveryBase struct {
 
 type OutOfBandDiscovery struct {
 	DiscoveryBase
-	Discovery struct {
-		ApiServerURLs []string `json:"apiServerURLs"`
-		CaCertFile    string   `json:"caCertFile"`
-	}
+	ApiServerURLs []string `json:"apiServerURLs"`
+	CaCertFile    string   `json:"caCertFile"`
 }
 
 func (o *OutOfBandDiscovery) Start() {
@@ -39,8 +37,8 @@ func (o *OutOfBandDiscovery) Start() {
 	// is a no-op.
 }
 
-func (o *OutOfBandDiscovery) Discover() ([]string, *x509.Certificate, error) {
-	asn1Data, err := ioutil.ReadFile(o.Discovery.CaCertFile)
+func (o *OutOfBandDiscovery) Discover() ([]string, x509.Certificate, error) {
+	asn1Data, err := ioutil.ReadFile(o.CaCertFile)
 	if err != nil {
 		return []string{}, nil, err
 	}
@@ -49,7 +47,7 @@ func (o *OutOfBandDiscovery) Discover() ([]string, *x509.Certificate, error) {
 	if err != nil {
 		return []string{}, nil, err
 	}
-	return o.Discovery.ApiServerURLs, caCert, nil
+	return o.ApiServerURLs, caCert, nil
 }
 
 type Discovery interface {
@@ -66,8 +64,6 @@ type Discovery interface {
 // from a reboot
 type GossipDiscovery struct {
 	DiscoveryBase
-	Discovery struct {
-		Token string   `json:"token"`
-		Peers []string `json:"peers"`
-	}
+	Token string   `json:"token"`
+	Peers []string `json:"peers"`
 }
