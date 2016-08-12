@@ -50,10 +50,14 @@ certificate to all your servers and specifying and (list of) API server URLs.`,
 
 	cmd.PersistentFlags().StringVarP(&discovery.CaCertFile, "cacertfile", "", "",
 		`Path to a CA cert file in PEM format. The same CA cert must be distributed to
-all servers.`)
+            all servers.`)
 	cmd.PersistentFlags().StringVarP(&discovery.ApiServerURLs, "apiserverurls", "", "",
 		`Comma separated list of API server URLs. Typically this might be just
-https://<address-of-master>:8080/`)
+            https://<address-of-master>:8080/`)
+
+	cmd.AddCommand(NewCmdManualBootstrapMaster(out, bootstrapParams))
+	cmd.AddCommand(NewCmdManualBootstrapNode(out, bootstrapParams))
+
 	return cmd
 }
 
