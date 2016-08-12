@@ -19,6 +19,8 @@ package kubeadm
 import (
 	"encoding/json"
 	"os"
+
+	"k8s.io/kubernetes/pkg/kubelet"
 )
 
 // kubeadm is responsible for writing the following file, which kubelet should
@@ -29,7 +31,7 @@ import (
 
 const KUBELET_BOOTSTRAP_FILE = "/etc/kubernetes/kubelet-bootstrap.json"
 
-func writeParamsIfNotExists(params *BootstrapParams) error {
+func writeParamsIfNotExists(params *kubelet.BootstrapParams) error {
 	serialized, err := json.Marshal(params)
 	if err != nil {
 		return err
@@ -43,8 +45,9 @@ func writeParamsIfNotExists(params *BootstrapParams) error {
 	)
 	defer f.Close()
 
-	_, err := f.Write(serialized)
+	_, err = f.Write(serialized)
 	if err != nil {
 		return err
 	}
+	return nil
 }
