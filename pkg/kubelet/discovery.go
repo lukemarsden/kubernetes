@@ -62,6 +62,8 @@ type Discovery interface {
 }
 
 // TODO implement Discovery methods on GossipDiscovery
+// TODO make gossip persist its state to disk, so that clusters can recover
+// from a reboot
 type GossipDiscovery struct {
 	DiscoveryBase
 	Discovery struct {
