@@ -44,17 +44,6 @@ certificate to all your servers and specifying and (list of) API server URLs.`,
 		Run: func(cmd *cobra.Command, args []string) {
 		},
 	}
-	var discovery *kubelet.OutOfBandDiscovery
-	discovery = &kubelet.OutOfBandDiscovery{}
-	params.Discovery = discovery
-
-	cmd.PersistentFlags().StringVarP(&discovery.CaCertFile, "cacertfile", "", "",
-		`Path to a CA cert file in PEM format. The same CA cert must be distributed to
-            all servers.`)
-	cmd.PersistentFlags().StringVarP(&discovery.ApiServerURLs, "apiserverurls", "", "",
-		`Comma separated list of API server URLs. Typically this might be just
-            https://<address-of-master>:8080/`)
-
 	cmd.AddCommand(NewCmdManualBootstrapMaster(out, params))
 	cmd.AddCommand(NewCmdManualBootstrapNode(out, params))
 
@@ -64,7 +53,11 @@ certificate to all your servers and specifying and (list of) API server URLs.`,
 func NewCmdManualBootstrapMaster(out io.Writer, params *BootstrapParams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "node",
-		Short: "Manually bootstrap a node 'out-of-band'",
+		Short: "Manually bootstrap a master 'out-of-band'",
+		Long: `Manually bootstrap a master 'out-of-band'.
+
+Will create TLS certificates and set up static pods for Kubernetes master
+components.`,
 
 		Run: func(cmd *cobra.Command, args []string) {
 			err := writeParamsIfNotExists(params)
@@ -73,6 +66,14 @@ func NewCmdManualBootstrapMaster(out io.Writer, params *BootstrapParams) *cobra.
 			}
 		},
 	}
+	var discovery *kubelet.OutOfBandDiscovery
+	discovery = &kubelet.OutOfBandDiscovery{}
+	params.Discovery = discovery
+
+	cmd.PersistentFlags().StringVarP(&discovery.ApiServerDNSName, "api-dns-name", "", "",
+		`(optional) DNS name for the API server, will be encoded into
+            subjectAltName in the resulting (generated) TLS certificates`)
+
 	return cmd
 }
 
@@ -88,5 +89,16 @@ func NewCmdManualBootstrapNode(out io.Writer, params *BootstrapParams) *cobra.Co
 			}
 		},
 	}
+	var discovery *kubelet.OutOfBandDiscovery
+	discovery = &kubelet.OutOfBandDiscovery{}
+	params.Discovery = discovery
+
+	cmd.PersistentFlags().StringVarP(&discovery.CaCertFile, "ca-cert-file", "", "",
+		`Path to a CA cert file in PEM format. The same CA cert must be distributed to
+            all servers.`)
+	cmd.PersistentFlags().StringVarP(&discovery.ApiServerURLs, "api-server-urls", "", "",
+		`Comma separated list of API server URLs. Typically this might be just
+            https://<address-of-master>:8080/`)
+
 	return cmd
 }

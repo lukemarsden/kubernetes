@@ -28,8 +28,9 @@ type DiscoveryBase struct {
 
 type OutOfBandDiscovery struct {
 	DiscoveryBase
-	ApiServerURLs string `json:"apiServerURLs"` // comma separated
-	CaCertFile    string `json:"caCertFile"`
+	ApiServerURLs    string `json:"apiServerURLs"` // comma separated
+	CaCertFile       string `json:"caCertFile"`
+	ApiServerDNSName string `json:"apiServerDNSName"` // optional, used in master bootstrap
 }
 
 func (o OutOfBandDiscovery) Start() {
