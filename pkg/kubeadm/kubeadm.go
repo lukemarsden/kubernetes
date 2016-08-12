@@ -19,6 +19,9 @@ package kubeadm
 import (
 	"encoding/json"
 	"os"
+
+	"k8s.io/kubernetes/pkg/api"
+	//"k8s.io/kubernetes/pkg/util/template"
 )
 
 // kubeadm is responsible for writing the following file, which kubelet should
@@ -49,3 +52,65 @@ func writeParamsIfNotExists(params *BootstrapParams) error {
 	}
 	return nil
 }
+
+func writeStaticPodsOnMaster() error {
+	staticPodSpecs = map[string]api.Pod{
+		"etcd": api.Pod{
+			// TODO this needs a volume
+			ApiVersion: "v1",
+			Metadata: api.ObjectMeta{
+				Name:      "etcd-server",
+				Namespace: "kube-system",
+			},
+			Spec: api.PodSpec{
+				Containers: []api.Container{
+					{
+						Command: []string{
+							"/bin/sh",
+							"-c",
+							"/usr/local/bin/etcd --listen-peer-urls http://127.0.0.1:2380 --addr 127.0.0.1:2379 --bind-addr 127.0.0.1:2379 --data-dir /var/etcd/data",
+						},
+						Image: "gcr.io/google_containers/etcd:2.2.1",
+						api.LivenessProbe{
+							Handler: api.Handler{
+								HTTPGet: &api.HTTPGetAction{
+									Host: "127.0.0.1",
+									Path: "/health",
+									Port: 2379,
+								},
+							},
+							InitialDelaySeconds: 15,
+							TimeoutSeconds:      15,
+						},
+						Name: "etcd-container",
+						/*
+						   "ports": [
+						      {
+						         "containerPort": 2380,
+						         "hostPort": 2380,
+						         "name": "serverport"
+						      },
+						      {
+						         "containerPort": 2379,
+						         "hostPort": 2379,
+						         "name": "clientport"
+						      }
+						   ],
+						   "resources": {
+						      "requests": {
+						         "cpu": "200m"
+						      }
+						   }
+						*/
+					},
+				},
+				HostNetwork: true,
+			},
+		},
+		"kube-api-server":         &api.Pod{}, // TODO bind-mount certs in
+		"kube-controller-manager": &api.Pod{},
+		"kube-scheduler":          &api.Pod{},
+	}
+}
+
+// TODO https://github.com/coreos/bootkube/blob/master/pkg/tlsutil/tlsutil.go
