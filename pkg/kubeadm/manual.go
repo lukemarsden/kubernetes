@@ -60,7 +60,7 @@ func NewCmdManualBootstrapMaster(out io.Writer, params *BootstrapParams) *cobra.
 		Run: func(cmd *cobra.Command, args []string) {
 			err := writeParamsIfNotExists(params)
 			if err != nil {
-				out.Write(fmt.Sprintf("Unable to write config for master:\n%s\n", err))
+				out.Write([]byte(fmt.Sprintf("Unable to write config for master:\n%s\n", err)))
 			}
 		},
 	}
@@ -75,7 +75,7 @@ func NewCmdManualBootstrapNode(out io.Writer, params *BootstrapParams) *cobra.Co
 		Run: func(cmd *cobra.Command, args []string) {
 			err := writeParamsIfNotExists(params)
 			if err != nil {
-				out.Write(fmt.Sprintf("Unable to write config for node:\n%s\n", err))
+				out.Write([]byte(fmt.Sprintf("Unable to write config for node:\n%s\n", err)))
 			}
 		},
 	}
