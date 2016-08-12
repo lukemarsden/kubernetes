@@ -55,8 +55,8 @@ certificate to all your servers and specifying and (list of) API server URLs.`,
 		`Comma separated list of API server URLs. Typically this might be just
             https://<address-of-master>:8080/`)
 
-	cmd.AddCommand(NewCmdManualBootstrapMaster(out, bootstrapParams))
-	cmd.AddCommand(NewCmdManualBootstrapNode(out, bootstrapParams))
+	cmd.AddCommand(NewCmdManualBootstrapMaster(out, params))
+	cmd.AddCommand(NewCmdManualBootstrapNode(out, params))
 
 	return cmd
 }
