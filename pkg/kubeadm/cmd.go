@@ -41,16 +41,21 @@ func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *co
     |                                                          |
     | But, please try it out! Give us feedback at:             |
     | https://github.com/kubernetes/kubernetes/issues          |
+    | and at-mention @kubernetes/sig-cluster-lifecycle         |
     \==========================================================/
 
 Example usage:
 
-    Create a two-server cluster with one master (which controls the cluster),
+    Create a two-machine cluster with one master (which controls the cluster),
     and one node (where workloads, like pods and containers run).
 
+    On the first machine
+    ====================
     master# kubeadm init master
     Your token is: <token>
 
+    On the second machine
+    =====================
     node# kubeadm join node --token=<token> <ip-of-master>
 `,
 	}
