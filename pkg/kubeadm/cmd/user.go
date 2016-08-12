@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdUser(out io.Writer) *cobra.Command {
+func NewCmdUser(out io.Writer, params *BootstrapParams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "user",
 		Short: "Get initial admin credentials for a cluster.", // using TLS bootstrap

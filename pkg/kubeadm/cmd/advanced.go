@@ -17,18 +17,19 @@ limitations under the License.
 package kubeadm
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/spf13/cobra"
 )
 
-func NewCmdManual(out io.Writer) *cobra.Command {
+func NewCmdManual(out io.Writer, params *BootstrapParams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "manual",
 		Short: "Advanced, less-automated functionality, for power users.",
 		// TODO put example usage in the Long description here
 	}
-	cmd.AddCommand(NewCmdManualBootstrap(out))
+	cmd.AddCommand(NewCmdManualBootstrap(out, params))
 	return cmd
 }
 

@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdInit(out io.Writer) *cobra.Command {
+func NewCmdInit(out io.Writer, params *BootstrapParams) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Run this on the first server you deploy onto.",

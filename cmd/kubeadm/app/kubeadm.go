@@ -19,12 +19,12 @@ package app
 import (
 	"os"
 
-	cmd "k8s.io/kubernetes/pkg/kubeadm/cmd"
+	"k8s.io/kubernetes/pkg/kubeadm"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 )
 
 // TODO add this to hyperkube?
 func Run() error {
-	cmd := cmd.NewKubeadmCommand(cmdutil.NewFactory(nil), os.Stdin, os.Stdout, os.Stderr)
+	cmd := kubeadm.NewKubeadmCommand(cmdutil.NewFactory(nil), os.Stdin, os.Stdout, os.Stderr)
 	return cmd.Execute()
 }
