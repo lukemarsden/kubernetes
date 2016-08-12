@@ -44,10 +44,13 @@ certificate to all your servers and specifying and (list of) API server URLs.`,
 		Run: func(cmd *cobra.Command, args []string) {
 		},
 	}
-	params.Discovery = kubelet.OutOfBandDiscovery{}
-	cmd.PersistentFlags().StringVarP(&params.Discovery.CACert, "cacertfile", "", "",
+	var discovery *kubelet.OutOfBandDiscovery
+	discovery = &kubelet.OutOfBandDiscovery{}
+	params.Discovery = discovery
+
+	cmd.PersistentFlags().StringVarP(&discovery.CaCertFile, "cacertfile", "", "",
 		`Path to a ca cert file in asn1 format. The same ca cert must be distributed to all servers.`)
-	cmd.PersistentFlags().StringVarP(&params.Discovery.ApiServerURLs, "apiserverurls", "", "",
+	cmd.PersistentFlags().StringVarP(&discovery.ApiServerURLs, "apiserverurls", "", "",
 		`Comma separated list of API server URLs. Typically this might be just https://<address-of-master>:8080/`)
 	return cmd
 }
