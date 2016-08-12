@@ -18,6 +18,7 @@ package kubelet
 
 import (
 	"crypto/x509"
+	"encoding/pem"
 	"io/ioutil"
 	"strings"
 )
@@ -38,24 +39,19 @@ func (o OutOfBandDiscovery) Start() {
 	// is a no-op.
 }
 
-func (o OutOfBandDiscovery) Discover() ([]string, *x509.Certificate, error) {
-	asn1Data, err := ioutil.ReadFile(o.CaCertFile)
+func (o OutOfBandDiscovery) Discover() ([]string, []byte, error) {
+	pemData, err := ioutil.ReadFile(o.CaCertFile)
 	if err != nil {
-		return []string{}, nil, err
+		return []string{}, []byte{}, err
 	}
-
-	caCert, err := x509.ParseCertificate(asn1Data)
-	if err != nil {
-		return []string{}, nil, err
-	}
-	return strings.Split(o.ApiServerURLs, ","), caCert, nil
+	return strings.Split(o.ApiServerURLs, ","), pemData, nil
 }
 
 type Discovery interface {
 	Start()
 	Discover() (
 		apiServerUrls []string,
-		caCert *x509.Certificate,
+		caCertPem []byte,
 		err error,
 	)
 }

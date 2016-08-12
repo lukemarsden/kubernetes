@@ -36,22 +36,22 @@ func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *co
 		Short: "kubeadm: bootstrap a secure kubernetes cluster easily.",
 		Long: `kubeadm: bootstrap a secure kubernetes cluster easily.
 
-	/==========================================================\
-	| KUBEADM IS ALPHA, DO NOT USE IT FOR PRODUCTION CLUSTERS! |
-	|                                                          |
-	| But, please try it out! Give us feedback at:             |
-	| https://github.com/kubernetes/kubernetes/issues          |
-	\==========================================================/
+    /==========================================================\
+    | KUBEADM IS ALPHA, DO NOT USE IT FOR PRODUCTION CLUSTERS! |
+    |                                                          |
+    | But, please try it out! Give us feedback at:             |
+    | https://github.com/kubernetes/kubernetes/issues          |
+    \==========================================================/
 
 Example usage:
 
-	Create a two-server cluster with one master (which controls the cluster),
-	and one node (where workloads, like pods and containers run).
+    Create a two-server cluster with one master (which controls the cluster),
+    and one node (where workloads, like pods and containers run).
 
-	master# kubeadm init master
-	Your token is: <token>
+    master# kubeadm init master
+    Your token is: <token>
 
-	node# kubeadm join node --token=<token> <ip-of-master>
+    node# kubeadm join node --token=<token> <ip-of-master>
 `,
 	}
 	// TODO also print the alpha warning when running any commands, as well as
