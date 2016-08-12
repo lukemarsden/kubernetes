@@ -17,8 +17,6 @@ limitations under the License.
 package kubelet
 
 import (
-	"crypto/x509"
-	"encoding/pem"
 	"io/ioutil"
 	"strings"
 )
