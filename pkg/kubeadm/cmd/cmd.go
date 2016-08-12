@@ -27,16 +27,32 @@ func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *co
 	var discovery string
 	cmds := &cobra.Command{
 		Use:   "kubeadm",
-		Short: "kubeadm: bootstrap a kubernetes cluster.",
-		Long:  `kubeadm: bootstrap a kubernetes cluster.`,
+		Short: "kubeadm: bootstrap a secure kubernetes cluster easily.",
+		Long: `kubeadm: bootstrap a secure kubernetes cluster easily.
+
+	/==========================================================\
+	| KUBEADM IS ALPHA, DO NOT USE IT FOR PRODUCTION CLUSTERS! |
+	|                                                          |
+	| But, please try it out! Give us feedback at:             |
+	| https://github.com/kubernetes/kubernetes/issues          |
+	\==========================================================/
+
+Example usage:
+
+	Create a two-server cluster with one master (which controls the cluster),
+	and one node (where workloads, like pods and containers run).
+
+	master# kubeadm init master
+	Your token is: <token>
+
+	node# kubeadm join node --token=<token> <ip-of-master>
+`,
 	}
 
 	cmds.AddCommand(NewCmdInit(out))
 	cmds.AddCommand(NewCmdJoin(out))
 	cmds.AddCommand(NewCmdUser(out))
-
-	cmds.PersistentFlags().StringVarP(&discovery, "discovery", "", "gossip",
-		`Discovery mechanism to use for cluster bootstrap (choose from "gossip", "out-of-band").`)
+	cmds.AddCommand(NewCmdAdvanced(out))
 
 	return cmds
 }
