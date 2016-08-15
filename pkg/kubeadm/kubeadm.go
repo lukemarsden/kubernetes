@@ -18,7 +18,7 @@ package kubeadm
 
 import (
 	"encoding/json"
-	"fmt"
+	_ "fmt"
 	"os"
 
 	"k8s.io/kubernetes/pkg/api"
@@ -234,11 +234,26 @@ func writeStaticPodsOnMaster() error {
 			},
 		},
 	}
-	serialized, err := json.Marshal(staticPodSpecs)
-	if err == nil {
-		fmt.Printf("staticPodSpecs: %q", serialized)
+
+	for name, spec := range staticPodSpecs {
+		serialized, err := json.MarshalIndent(spec, "", "  ")
+		if err != nil {
+			return err
+		}
+		//fmt.Printf("%s: %q\n", name, serialized)
+		f, err := os.OpenFile(
+			"./"+name+".json",
+			os.O_CREATE|os.O_WRONLY|os.O_EXCL,
+			0600,
+		)
+		defer f.Close()
+
+		_, err = f.Write(serialized)
+		if err != nil {
+			return err
+		}
 	}
-	return err
+	return nil
 }
 
 // TODO https://github.com/coreos/bootkube/blob/master/pkg/tlsutil/tlsutil.go
