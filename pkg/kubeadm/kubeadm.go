@@ -22,6 +22,7 @@ import (
 	"os"
 
 	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/util/intstr"
 )
 
@@ -83,33 +84,155 @@ func writeStaticPodsOnMaster() error {
 							TimeoutSeconds:      15,
 						},
 						Name: "etcd-container",
-						/*
-						   "ports": [
-						      {
-						         "containerPort": 2380,
-						         "hostPort": 2380,
-						         "name": "serverport"
-						      },
-						      {
-						         "containerPort": 2379,
-						         "hostPort": 2379,
-						         "name": "clientport"
-						      }
-						   ],
-						   "resources": {
-						      "requests": {
-						         "cpu": "200m"
-						      }
-						   }
-						*/
+						Ports: []api.ContainerPort{
+							{Name: "serverport", ContainerPort: 2380, HostPort: 2380},
+							{Name: "clientport", ContainerPort: 2379, HostPort: 2379},
+						},
+						Resources: api.ResourceRequirements{
+							Requests: api.ResourceList{
+								api.ResourceName(api.ResourceCPU): resource.MustParse("200m"),
+							},
+						},
 					},
 				},
 				SecurityContext: &api.PodSecurityContext{HostNetwork: true},
 			},
 		},
-		"kube-api-server":         api.Pod{}, // TODO bind-mount certs in
-		"kube-controller-manager": api.Pod{},
-		"kube-scheduler":          api.Pod{},
+		"kube-apiserver": api.Pod{
+			// TODO bind-mount certs in
+			ObjectMeta: api.ObjectMeta{
+				Name:      "kube-apiserver",
+				Namespace: "kube-system",
+				Labels:    map[string]string{"component": "kube-apiserver", "tier": "control-plane"},
+			},
+			Spec: api.PodSpec{
+				Containers: []api.Container{
+					{
+						Command: []string{
+							"/hyperkube",
+							"apiserver",
+							"--address=127.0.0.1",
+							"--etcd-servers=http://127.0.0.1:2379",
+							"--cloud-provider=fake",
+							"--admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,ResourceQuota",
+							"--service-cluster-ip-range=10.16.0.0/12",
+							"--service-account-key-file=/etc/kubernetes/test-pki/apiserver-key.pem",
+							"--client-ca-file=/etc/kubernetes/test-pki/ca.pem",
+							"--tls-cert-file=/etc/kubernetes/test-pki/apiserver.pem",
+							"--tls-private-key-file=/etc/kubernetes/test-pki/apiserver-key.pem",
+							"--secure-port=443",
+							"--allow-privileged",
+							"--v=4",
+						},
+						Image: "errordeveloper/hyperquick:master",
+						LivenessProbe: &api.Probe{
+							Handler: api.Handler{
+								HTTPGet: &api.HTTPGetAction{
+									Host: "127.0.0.1",
+									Path: "/healthz",
+									Port: intstr.FromInt(8080),
+								},
+							},
+							InitialDelaySeconds: 15,
+							TimeoutSeconds:      15,
+						},
+						Name: "kube-apiserver",
+						Ports: []api.ContainerPort{
+							{Name: "https", ContainerPort: 443, HostPort: 443},
+							{Name: "local", ContainerPort: 8080, HostPort: 8080},
+						},
+						Resources: api.ResourceRequirements{
+							Requests: api.ResourceList{
+								api.ResourceName(api.ResourceCPU): resource.MustParse("250m"),
+							},
+						},
+					},
+				},
+				SecurityContext: &api.PodSecurityContext{HostNetwork: true},
+			},
+		},
+		"kube-controller-manager": api.Pod{
+			ObjectMeta: api.ObjectMeta{
+				Name:      "kube-controller-manager",
+				Namespace: "kube-system",
+				Labels:    map[string]string{"component": "kube-controller-manager", "tier": "control-plane"},
+			},
+			Spec: api.PodSpec{
+				Containers: []api.Container{
+					{
+						Command: []string{
+							"/hyperkube",
+							"controller-manager",
+							"--master=127.0.0.1:8080",
+							"--cluster-name=kubernetes",
+							"--root-ca-file=/etc/kubernetes/test-pki/ca.pem",
+							"--service-account-private-key-file=/etc/kubernetes/test-pki/apiserver-key.pem",
+							"--cluster-signing-cert-file=/etc/kubernetes/test-pki/ca.pem",
+							"--cluster-signing-key-file=/etc/kubernetes/test-pki/ca-key.pem",
+							"--insecure-approve-all-csrs=true",
+							"--v=4",
+						},
+						Image: "errordeveloper/hyperquick:master",
+						LivenessProbe: &api.Probe{
+							Handler: api.Handler{
+								HTTPGet: &api.HTTPGetAction{
+									Host: "127.0.0.1",
+									Path: "/healthz",
+									Port: intstr.FromInt(10252),
+								},
+							},
+							InitialDelaySeconds: 15,
+							TimeoutSeconds:      15,
+						},
+						Name: "kube-controller-manager",
+						Resources: api.ResourceRequirements{
+							Requests: api.ResourceList{
+								api.ResourceName(api.ResourceCPU): resource.MustParse("200m"),
+							},
+						},
+					},
+				},
+				SecurityContext: &api.PodSecurityContext{HostNetwork: true},
+			},
+		},
+		"kube-scheduler": api.Pod{
+			ObjectMeta: api.ObjectMeta{
+				Name:      "kube-scheduler",
+				Namespace: "kube-system",
+				Labels:    map[string]string{"component": "kube-scheduler", "tier": "control-plane"},
+			},
+			Spec: api.PodSpec{
+				Containers: []api.Container{
+					{
+						Command: []string{
+							"/hyperkube",
+							"scheduler",
+							"--master=127.0.0.1:8080",
+							"--v=4",
+						},
+						Image: "errordeveloper/hyperquick:master",
+						LivenessProbe: &api.Probe{
+							Handler: api.Handler{
+								HTTPGet: &api.HTTPGetAction{
+									Host: "127.0.0.1",
+									Path: "/healthz",
+									Port: intstr.FromInt(10253),
+								},
+							},
+							InitialDelaySeconds: 15,
+							TimeoutSeconds:      15,
+						},
+						Name: "kube-controller-manager",
+						Resources: api.ResourceRequirements{
+							Requests: api.ResourceList{
+								api.ResourceName(api.ResourceCPU): resource.MustParse("100m"),
+							},
+						},
+					},
+				},
+				SecurityContext: &api.PodSecurityContext{HostNetwork: true},
+			},
+		},
 	}
 	serialized, err := json.Marshal(staticPodSpecs)
 	if err == nil {
