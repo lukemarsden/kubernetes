@@ -73,21 +73,21 @@ components.`,
 				* secure port - default to 443
 
 			*/
-			err := writeStaticPodsOnMaster()
-			if err != nil {
+			if err := writeStaticPodsOnMaster(); err != nil {
 				return err
 			}
-			err = generateAndWriteCertificatesOnMaster(params.ApiServerDNSName)
-			if err != nil {
-				return err
-			}
+
+			//TODO if err := generateAndWriteCertificatesOnMaster(params.ApiServerDNSName); err != nil {
+			//	return err
+			//}
 			out.Write([]byte(`CA cert is written to XXX. Please scp this to all your nodes before running
 'kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert>
 --api-server-urls http://<ip-of-master>:8080/`))
-			err := writeParamsIfNotExists(params)
-			if err != nil {
+			if err := writeParamsIfNotExists(params); err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for master:\n%s\n", err)))
 			}
+
+			return nil
 		},
 	}
 	var discovery *kubelet.OutOfBandDiscovery

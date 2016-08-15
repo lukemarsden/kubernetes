@@ -18,10 +18,11 @@ package kubeadm
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"k8s.io/kubernetes/pkg/api"
-	//"k8s.io/kubernetes/pkg/util/template"
+	"k8s.io/kubernetes/pkg/util/intstr"
 )
 
 // kubeadm is responsible for writing the following file, which kubelet should
@@ -54,11 +55,10 @@ func writeParamsIfNotExists(params *BootstrapParams) error {
 }
 
 func writeStaticPodsOnMaster() error {
-	staticPodSpecs = map[string]api.Pod{
+	staticPodSpecs := map[string]api.Pod{
 		"etcd": api.Pod{
 			// TODO this needs a volume
-			ApiVersion: "v1",
-			Metadata: api.ObjectMeta{
+			ObjectMeta: api.ObjectMeta{
 				Name:      "etcd-server",
 				Namespace: "kube-system",
 			},
@@ -71,12 +71,12 @@ func writeStaticPodsOnMaster() error {
 							"/usr/local/bin/etcd --listen-peer-urls http://127.0.0.1:2380 --addr 127.0.0.1:2379 --bind-addr 127.0.0.1:2379 --data-dir /var/etcd/data",
 						},
 						Image: "gcr.io/google_containers/etcd:2.2.1",
-						api.LivenessProbe{
+						LivenessProbe: &api.Probe{
 							Handler: api.Handler{
 								HTTPGet: &api.HTTPGetAction{
 									Host: "127.0.0.1",
 									Path: "/health",
-									Port: 2379,
+									Port: intstr.FromInt(2379),
 								},
 							},
 							InitialDelaySeconds: 15,
@@ -104,13 +104,18 @@ func writeStaticPodsOnMaster() error {
 						*/
 					},
 				},
-				HostNetwork: true,
+				SecurityContext: &api.PodSecurityContext{HostNetwork: true},
 			},
 		},
-		"kube-api-server":         &api.Pod{}, // TODO bind-mount certs in
-		"kube-controller-manager": &api.Pod{},
-		"kube-scheduler":          &api.Pod{},
+		"kube-api-server":         api.Pod{}, // TODO bind-mount certs in
+		"kube-controller-manager": api.Pod{},
+		"kube-scheduler":          api.Pod{},
 	}
+	serialized, err := json.Marshal(staticPodSpecs)
+	if err == nil {
+		fmt.Printf("staticPodSpecs: %q", serialized)
+	}
+	return err
 }
 
 // TODO https://github.com/coreos/bootkube/blob/master/pkg/tlsutil/tlsutil.go
