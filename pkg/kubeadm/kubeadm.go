@@ -18,12 +18,17 @@ package kubeadm
 
 import (
 	"bytes"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	_ "encoding/pem"
 	_ "fmt"
+	"net"
 	"os"
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/resource"
+	"k8s.io/kubernetes/pkg/kubeadm/tlsutil"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/util/intstr"
 )
@@ -41,7 +46,8 @@ const (
 	CLUSTER_NAME             = "--cluster-name=kubernetes"
 	MASTER                   = "--master=127.0.0.1:8080"
 	HYPERKUBE_IMAGE          = "errordeveloper/hyperquick:master"
-	MANIFESTS                = "./manifests/" // TODO use a slice and join it
+	MANIFESTS_PATH           = "./manifests/" // TODO use a slice and join it
+	PKI_PATH                 = "./pki/"       // TODO use a slice and join it
 )
 
 func writeParamsIfNotExists(params *BootstrapParams) error {
@@ -101,7 +107,7 @@ func componentPod(container api.Container) api.Pod {
 	}
 }
 
-func writeStaticPodsOnMaster() error {
+func writeStaticPodsOnMaster() error { // TODO it's quite implicitly on master, and it'd be in a separate file, so rename it
 	staticPodSpecs := map[string]api.Pod{
 		// TODO this needs a volume
 		"etcd": componentPod(api.Container{
@@ -131,7 +137,7 @@ func writeStaticPodsOnMaster() error {
 				"--cloud-provider=fake", // TODO parametrise
 				"--admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,ResourceQuota",
 				SERVICE_CLUSTER_IP_RANGE,
-				"--service-account-key-file=/etc/kubernetes/test-pki/apiserver-key.pem",
+				"--service-account-key-file=/etc/kubernetes/test-pki/sa-key.pem",
 				"--client-ca-file=/etc/kubernetes/test-pki/ca.pem",
 				"--tls-cert-file=/etc/kubernetes/test-pki/apiserver.pem",
 				"--tls-private-key-file=/etc/kubernetes/test-pki/apiserver-key.pem",
@@ -178,7 +184,7 @@ func writeStaticPodsOnMaster() error {
 		}),
 	}
 
-	if err := os.MkdirAll(MANIFESTS, 0700); err != nil {
+	if err := os.MkdirAll(MANIFESTS_PATH, 0700); err != nil {
 		return err
 	}
 	for name, spec := range staticPodSpecs {
@@ -186,11 +192,147 @@ func writeStaticPodsOnMaster() error {
 		if err != nil {
 			return err
 		}
-		if err := util.DumpReaderToFile(bytes.NewReader(serialized), MANIFESTS+name+".json"); err != nil {
+		if err := util.DumpReaderToFile(bytes.NewReader(serialized), MANIFESTS_PATH+name+".json"); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// TODO https://github.com/coreos/bootkube/blob/master/pkg/tlsutil/tlsutil.go
+func newCertificateAuthority() (*rsa.PrivateKey, *x509.Certificate, error) {
+	key, err := tlsutil.NewPrivateKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	config := tlsutil.CertConfig{
+		CommonName: "kubernetes",
+	}
+
+	cert, err := tlsutil.NewSelfSignedCACertificate(config, key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return key, cert, err
+}
+
+func newAPIKeyAndCert(caCert *x509.Certificate, caKey *rsa.PrivateKey, altNames tlsutil.AltNames) (*rsa.PrivateKey, *x509.Certificate, error) {
+	key, err := tlsutil.NewPrivateKey()
+	if err != nil {
+		return nil, nil, err
+	}
+	altNames.IPs = append(altNames.IPs, net.ParseIP("10.3.0.1"))
+	altNames.DNSNames = append(altNames.DNSNames, []string{
+		"kubernetes",
+		"kubernetes.default",
+		"kubernetes.default.svc",
+		"kubernetes.default.svc.cluster.local",
+	}...)
+
+	config := tlsutil.CertConfig{
+		CommonName: "kube-apiserver",
+		AltNames:   altNames,
+	}
+	cert, err := tlsutil.NewSignedCertificate(config, key, caCert, caKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	return key, cert, err
+}
+
+func newAdminKeyAndCert(caCert *x509.Certificate, caKey *rsa.PrivateKey) (*rsa.PrivateKey, *x509.Certificate, error) {
+	key, err := tlsutil.NewPrivateKey()
+	if err != nil {
+		return nil, nil, err
+	}
+	config := tlsutil.CertConfig{
+		CommonName: "kubernetes-admin",
+	}
+	cert, err := tlsutil.NewSignedCertificate(config, key, caCert, caKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	return key, cert, err
+}
+
+func writeKeysAndCert(name string, key *rsa.PrivateKey, cert *x509.Certificate) error {
+
+	if key != nil {
+		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodePrivateKeyPEM(key)), MANIFESTS_PATH+name+"-key.pem"); err != nil {
+			return err
+		}
+		if pubKey, err := tlsutil.EncodePublicKeyPEM(&key.PublicKey); err == nil {
+			if err := util.DumpReaderToFile(bytes.NewReader(pubKey), MANIFESTS_PATH+name+"-pub.pem"); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+
+	if cert != nil {
+		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodeCertificatePEM(cert)), MANIFESTS_PATH+name+".pem"); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func newServiceAccountKey() (*rsa.PrivateKey, error) {
+	key, err := tlsutil.NewPrivateKey()
+	if err != nil {
+		return nil, err
+	}
+	return key, err
+}
+
+func writetPKIAssets() error {
+	var (
+		err      error
+		altNames tlsutil.AltNames // TODO actual SANs
+	)
+
+	if err := os.MkdirAll(PKI_PATH, 0700); err != nil {
+		return err
+	}
+
+	caKey, caCert, err := newCertificateAuthority()
+	if err != nil {
+		return err
+	}
+
+	if err := writeKeysAndCert("ca", caKey, caCert); err != nil {
+		return err
+	}
+
+	apiKey, apiCert, err := newAPIKeyAndCert(caCert, caKey, altNames)
+	if err != nil {
+		return err
+	}
+
+	if err := writeKeysAndCert("apiserver", apiKey, apiCert); err != nil {
+		return err
+	}
+
+	saKey, err := newServiceAccountKey()
+	if err != nil {
+		return err
+	}
+
+	if err := writeKeysAndCert("sa", saKey, nil); err != nil {
+		return err
+	}
+
+	admKey, admCert, err := newAdminKeyAndCert(caCert, caKey)
+	if err != nil {
+		return err
+	}
+
+	if err := writeKeysAndCert("admin", admKey, admCert); err != nil {
+		return err
+	}
+
+	return err
+}
