@@ -18,6 +18,7 @@ package app
 
 import (
 	"os"
+	"path"
 
 	"k8s.io/kubernetes/pkg/kubeadm"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
@@ -25,6 +26,11 @@ import (
 
 // TODO add this to hyperkube?
 func Run() error {
-	cmd := kubeadm.NewKubeadmCommand(cmdutil.NewFactory(nil), os.Stdin, os.Stdout, os.Stderr)
+	prefix := os.Getenv("KUBE_PREFIX")
+	if prefix == "" {
+		prefix = path.Join("etc", "kubernetes")
+	}
+
+	cmd := kubeadm.NewKubeadmCommand(cmdutil.NewFactory(nil), os.Stdin, os.Stdout, os.Stderr, prefix)
 	return cmd.Execute()
 }
