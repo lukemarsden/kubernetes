@@ -80,21 +80,24 @@ components.`,
 			//TODO if err := generateAndWriteCertificatesOnMaster(params.ApiServerDNSName); err != nil {
 			//	return err
 			//}
-			out.Write([]byte(`CA cert is written to XXX. Please scp this to all your nodes before running
-    kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert> --api-server-urls http://<ip-of-master>:8080/
-`))
 			if err := writeParamsIfNotExists(params); err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for master:\n%s\n", err)))
 			}
+
+			out.Write([]byte(`CA cert is written to XXX. Please scp this to all your nodes before running
+    kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert> --api-server-urls http://<ip-of-master>:8080/
+`))
 
 			return nil
 		},
 	}
 	var discovery *kubelet.OutOfBandDiscovery
 	discovery = &kubelet.OutOfBandDiscovery{
-		ApiVersion: "v1alpha1",
-		Role:       "master",
-		Kind:       "OutOfBandDiscovery", // TODO NewOutOfBandDiscovery()
+		ApiVersion:    "v1alpha1",
+		Role:          "master",
+		Kind:          "OutOfBandDiscovery",     // TODO NewOutOfBandDiscovery()
+		CaCertFile:    "",                       // TODO maybe we should put our generated ca cert file in here
+		ApiServerURLs: "http://127.0.0.1:8080/", // On the master, assume you can talk to the API server
 	}
 	params.Discovery = discovery
 
@@ -106,25 +109,36 @@ components.`,
 }
 
 func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobra.Command {
+	var discovery *kubelet.OutOfBandDiscovery
+	discovery = &kubelet.OutOfBandDiscovery{
+		ApiVersion:    "v1alpha1",
+		Role:          "node",
+		Kind:          "OutOfBandDiscovery", // TODO NewOutOfBandDiscovery()
+		ApiServerURLs: discovery.ApiServerURLs,
+		CaCertFile:    discovery.CaCertFile,
+	}
+	params.Discovery = discovery
+
 	cmd := &cobra.Command{
 		Use:   "join-node",
 		Short: "Manually bootstrap a node 'out-of-band', joining it into a cluster with extant control plane",
 
 		Run: func(cmd *cobra.Command, args []string) {
+			if discovery.CaCertFile == "" {
+				out.Write([]byte(fmt.Sprintf("Must specify --ca-cert-file (see --help)\n")))
+				return
+			}
+			if discovery.ApiServerURLs == "" {
+				out.Write([]byte(fmt.Sprintf("Must specify --api-server-urls (see --help)\n")))
+				return
+			}
 			err := writeParamsIfNotExists(params)
 			if err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for node:\n%s\n", err)))
+				return
 			}
 		},
 	}
-	var discovery *kubelet.OutOfBandDiscovery
-	discovery = &kubelet.OutOfBandDiscovery{
-		ApiVersion: "v1alpha1",
-		Role:       "node",
-		Kind:       "OutOfBandDiscovery", // TODO NewOutOfBandDiscovery()
-	}
-	params.Discovery = discovery
-
 	cmd.PersistentFlags().StringVarP(&discovery.CaCertFile, "ca-cert-file", "", "",
 		`Path to a CA cert file in PEM format. The same CA cert must be distributed to
             all servers.`)
