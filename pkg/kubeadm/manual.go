@@ -131,8 +131,8 @@ func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobr
 				return
 			}
 			// At this point we have extracted this data from the user
-			params.ApiServerURLs = discovery.ApiServerURLs
-			params.CaCertFile = discovery.CaCertFile
+			params.Discovery.ApiServerURLs = discovery.ApiServerURLs
+			params.Discovery.CaCertFile = discovery.CaCertFile
 
 			err := writeParamsIfNotExists(params)
 			if err != nil {
