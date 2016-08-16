@@ -31,7 +31,6 @@ import (
 
 const KUBELET_BOOTSTRAP_DIR = "/etc/kubernetes"
 const KUBELET_BOOTSTRAP_FILE = KUBELET_BOOTSTRAP_DIR + "/kubelet-bootstrap.json"
-const PKI_PATH = "./pki/" // TODO use a slice and join it
 
 func writeParamsIfNotExists(params *BootstrapParams) error {
 	serialized, err := json.Marshal(params)

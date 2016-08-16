@@ -25,10 +25,11 @@ import (
 	"net"
 	"os"
 
-	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/kubeadm/tlsutil"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
 )
+
+const PKI_PATH = "./pki/" // TODO use a slice and join it
 
 func newCertificateAuthority() (*rsa.PrivateKey, *x509.Certificate, error) {
 	key, err := tlsutil.NewPrivateKey()
@@ -90,11 +91,11 @@ func newAdminKeyAndCert(caCert *x509.Certificate, caKey *rsa.PrivateKey) (*rsa.P
 func writeKeysAndCert(name string, key *rsa.PrivateKey, cert *x509.Certificate) error {
 
 	if key != nil {
-		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodePrivateKeyPEM(key)), MANIFESTS_PATH+name+"-key.pem"); err != nil {
+		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodePrivateKeyPEM(key)), PKI_PATH+name+"-key.pem"); err != nil {
 			return err
 		}
 		if pubKey, err := tlsutil.EncodePublicKeyPEM(&key.PublicKey); err == nil {
-			if err := util.DumpReaderToFile(bytes.NewReader(pubKey), MANIFESTS_PATH+name+"-pub.pem"); err != nil {
+			if err := util.DumpReaderToFile(bytes.NewReader(pubKey), PKI_PATH+name+"-pub.pem"); err != nil {
 				return err
 			}
 		} else {
@@ -103,7 +104,7 @@ func writeKeysAndCert(name string, key *rsa.PrivateKey, cert *x509.Certificate) 
 	}
 
 	if cert != nil {
-		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodeCertificatePEM(cert)), MANIFESTS_PATH+name+".pem"); err != nil {
+		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodeCertificatePEM(cert)), PKI_PATH+name+".pem"); err != nil {
 			return err
 		}
 	}
