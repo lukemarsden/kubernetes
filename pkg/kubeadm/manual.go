@@ -130,10 +130,6 @@ func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobr
 				out.Write([]byte(fmt.Sprintf("Must specify --api-server-urls (see --help)\n")))
 				return
 			}
-			// At this point we have extracted this data from the user
-			params.Discovery.ApiServerURLs = discovery.ApiServerURLs
-			params.Discovery.CaCertFile = discovery.CaCertFile
-
 			err := writeParamsIfNotExists(params)
 			if err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for node:\n%s\n", err)))
