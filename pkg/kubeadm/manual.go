@@ -91,7 +91,11 @@ components.`,
 		},
 	}
 	var discovery *kubelet.OutOfBandDiscovery
-	discovery = &kubelet.OutOfBandDiscovery{}
+	discovery = &kubelet.OutOfBandDiscovery{
+		ApiVersion: "v1alpha1",
+		Role:       "master",
+		Kind:       "OutOfBandDiscovery", // TODO NewOutOfBandDiscovery()
+	}
 	params.Discovery = discovery
 
 	cmd.PersistentFlags().StringVarP(&discovery.ApiServerDNSName, "api-dns-name", "", "",
@@ -114,7 +118,11 @@ func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobr
 		},
 	}
 	var discovery *kubelet.OutOfBandDiscovery
-	discovery = &kubelet.OutOfBandDiscovery{}
+	discovery = &kubelet.OutOfBandDiscovery{
+		ApiVersion: "v1alpha1",
+		Role:       "node",
+		Kind:       "OutOfBandDiscovery", // TODO NewOutOfBandDiscovery()
+	}
 	params.Discovery = discovery
 
 	cmd.PersistentFlags().StringVarP(&discovery.CaCertFile, "ca-cert-file", "", "",

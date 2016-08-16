@@ -60,5 +60,3 @@ func writeParamsIfNotExists(params *BootstrapParams) error {
 	}
 	return nil
 }
-
-// TODO https://github.com/coreos/bootkube/blob/master/pkg/tlsutil/tlsutil.go

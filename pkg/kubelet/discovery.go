@@ -21,13 +21,11 @@ import (
 	"strings"
 )
 
-type DiscoveryBase struct {
-	ApiVersion string `json:"apiVersion"` // 'v1alpha1'
-	Role       string `json:"role"`       // 'master' or 'node'
-}
-
 type OutOfBandDiscovery struct {
-	DiscoveryBase
+	// TODO factor out ApiVersion, Role and Kind into DiscoveryBase
+	ApiVersion       string `json:"apiVersion"`    // 'v1alpha1'
+	Role             string `json:"role"`          // 'master' or 'node'
+	Kind             string `json:"kind"`          // e.g. "OutOfBandDiscovery" or "GossipDiscovery"
 	ApiServerURLs    string `json:"apiServerURLs"` // comma separated
 	CaCertFile       string `json:"caCertFile"`
 	ApiServerDNSName string `json:"apiServerDNSName"` // optional, used in master bootstrap
@@ -59,7 +57,10 @@ type Discovery interface {
 // TODO make gossip persist its state to disk, so that clusters can recover
 // from a reboot
 type GossipDiscovery struct {
-	DiscoveryBase
-	Token string `json:"token"`
-	Peers string `json:"peers"` // comma separated
+	// TODO factor out ApiVersion, Role and Kind into DiscoveryBase
+	ApiVersion string `json:"apiVersion"` // 'v1alpha1'
+	Role       string `json:"role"`       // 'master' or 'node'
+	Kind       string `json:"kind"`       // e.g. "OutOfBandDiscovery" or "GossipDiscovery"
+	Token      string `json:"token"`
+	Peers      string `json:"peers"` // comma separated
 }
