@@ -17,15 +17,9 @@ limitations under the License.
 package kubeadm
 
 import (
-	"bytes"
 	"encoding/json"
 	_ "fmt"
 	"os"
-
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/resource"
-	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
-	"k8s.io/kubernetes/pkg/util/intstr"
 )
 
 // kubeadm is responsible for writing the following file, which kubelet should
