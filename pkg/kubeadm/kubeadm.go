@@ -28,6 +28,8 @@ import (
 // case - they'd need to stop the kubelet, remove the file, and start it again
 // in that case).
 
+const KUBELET_BOOTSTRAP_FILE = "/etc/kubernetes/kubelet-bootstrap.json"
+
 func writeParamsIfNotExists(params *BootstrapParams) error {
 	serialized, err := json.Marshal(params)
 	if err != nil {
@@ -40,6 +42,9 @@ func writeParamsIfNotExists(params *BootstrapParams) error {
 		os.O_CREATE|os.O_WRONLY|os.O_EXCL,
 		0600,
 	)
+	if err != nil {
+		return err
+	}
 	defer f.Close()
 
 	_, err = f.Write(serialized)

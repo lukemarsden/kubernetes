@@ -32,7 +32,6 @@ import (
 // init master` and `kubeadm manual bootstrap master` can get going.
 
 const (
-	KUBELET_BOOTSTRAP_FILE   = "/etc/kubernetes/kubelet-bootstrap.json"
 	COMPONENT_LOGLEVEL       = "--v=4"
 	SERVICE_CLUSTER_IP_RANGE = "--service-cluster-ip-range=10.16.0.0/12"
 	CLUSTER_NAME             = "--cluster-name=kubernetes"
