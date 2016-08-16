@@ -21,8 +21,6 @@ import (
 	"io"
 
 	"github.com/spf13/cobra"
-
-	"k8s.io/kubernetes/pkg/kubelet"
 )
 
 func NewCmdManual(out io.Writer, params *BootstrapParams) *cobra.Command {
@@ -68,24 +66,21 @@ components.`,
 			//	return err
 			//}
 
-			if err := writeParamsIfNotExists(params); err != nil {
+			if err := writeKubeconfigIfNotExists(params); err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for master:\n%s\n", err)))
 				return nil
 			}
 
-			out.Write([]byte(`Static pods written and kubelet started.
+			out.Write([]byte(`Static pods written and kubelet's kubeconfig written.
+Kubelet should be able to start soon (try systemctl restart kubelet or equivalent if it doesn't).
 CA cert is written to XXX. Please scp this to all your nodes before running:
     kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert> --api-server-urls http://<ip-of-master>:8080/
 `))
 			return nil
 		},
 	}
-	var discovery *kubelet.OutOfBandDiscovery
-	discovery = &kubelet.OutOfBandDiscovery{
-		ApiVersion:    "v1alpha1",
-		Role:          "master",
-		Kind:          "OutOfBandDiscovery",     // TODO NewOutOfBandDiscovery()
-		CaCertFile:    "",                       // TODO maybe we should put our generated ca cert file in here
+	var discovery *OutOfBandDiscovery
+	discovery = &OutOfBandDiscovery{
 		ApiServerURLs: "http://127.0.0.1:8080/", // On the master, assume you can talk to the API server
 	}
 	params.Discovery = discovery
@@ -97,13 +92,16 @@ CA cert is written to XXX. Please scp this to all your nodes before running:
 	return cmd
 }
 
+type OutOfBandDiscovery struct {
+	ApiServerURLs    string `json:"apiServerURLs"` // comma separated
+	CaCertFile       string `json:"caCertFile"`
+	ApiServerDNSName string `json:"apiServerDNSName"` // optional, used in master bootstrap
+	ListenIP         string `json:"listenIP"`         // optional IP for master to listen on, rather than autodetect
+}
+
 func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobra.Command {
-	var discovery *kubelet.OutOfBandDiscovery
-	discovery = &kubelet.OutOfBandDiscovery{
-		ApiVersion: "v1alpha1",
-		Role:       "node",
-		Kind:       "OutOfBandDiscovery", // TODO NewOutOfBandDiscovery()
-	}
+	var discovery *OutOfBandDiscovery
+	discovery = &OutOfBandDiscovery{}
 	params.Discovery = discovery
 
 	cmd := &cobra.Command{
@@ -119,13 +117,13 @@ func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobr
 				out.Write([]byte(fmt.Sprintf("Must specify --api-server-urls (see --help)\n")))
 				return
 			}
-			err := writeParamsIfNotExists(params)
+			err := writeKubeconfigIfNotExists(params)
 			if err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for node:\n%s\n", err)))
 				return
 			}
 			out.Write([]byte(`Kubelet started with given arguments, it should attempt TLS bootstrap now.
-Run kubectl get nodes on the master to see it join.
+Run 'kubectl get nodes' on the master to see it join.
 `))
 		},
 	}
@@ -135,6 +133,8 @@ Run kubectl get nodes on the master to see it join.
 	cmd.PersistentFlags().StringVarP(&discovery.ApiServerURLs, "api-server-urls", "", "",
 		`Comma separated list of API server URLs. Typically this might be just
             https://<address-of-master>:8080/`)
+	cmd.PersistentFlags().StringVarP(&discovery.ApiServerURLs, "listen-ip", "", "",
+		`(optional) IP address to listen on, in case autodetection fails.`)
 
 	return cmd
 }

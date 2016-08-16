@@ -18,8 +18,6 @@ package kubeadm
 
 import (
 	"encoding/json"
-	_ "encoding/pem"
-	_ "fmt"
 	"os"
 )
 
@@ -32,7 +30,8 @@ import (
 const KUBELET_BOOTSTRAP_DIR = "/etc/kubernetes"
 const KUBELET_BOOTSTRAP_FILE = KUBELET_BOOTSTRAP_DIR + "/kubelet-bootstrap.json"
 
-func writeParamsIfNotExists(params *BootstrapParams) error {
+func writeKubeconfigIfNotExists(params *BootstrapParams) error {
+	// TODO actually write a kubeconfig
 	serialized, err := json.Marshal(params)
 	if err != nil {
 		return err

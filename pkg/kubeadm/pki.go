@@ -20,8 +20,6 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
-	_ "encoding/pem"
-	_ "fmt"
 	"net"
 	"os"
 

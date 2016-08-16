@@ -21,13 +21,12 @@ import (
 
 	"github.com/spf13/cobra"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
-	"k8s.io/kubernetes/pkg/kubelet"
 )
 
 type BootstrapParams struct {
 	// A struct with methods that implement Start() and Discover()
 	// kubeadm will persist this struct to disk and kubelet will read it.
-	Discovery kubelet.Discovery
+	Discovery *OutOfBandDiscovery
 }
 
 func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *cobra.Command {
