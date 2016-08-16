@@ -82,12 +82,12 @@ components.`,
 			//}
 			if err := writeParamsIfNotExists(params); err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for master:\n%s\n", err)))
+				return nil
 			}
 
 			out.Write([]byte(`CA cert is written to XXX. Please scp this to all your nodes before running
     kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert> --api-server-urls http://<ip-of-master>:8080/
 `))
-
 			return nil
 		},
 	}
