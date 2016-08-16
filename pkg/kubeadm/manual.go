@@ -111,11 +111,9 @@ components.`,
 func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobra.Command {
 	var discovery *kubelet.OutOfBandDiscovery
 	discovery = &kubelet.OutOfBandDiscovery{
-		ApiVersion:    "v1alpha1",
-		Role:          "node",
-		Kind:          "OutOfBandDiscovery", // TODO NewOutOfBandDiscovery()
-		ApiServerURLs: discovery.ApiServerURLs,
-		CaCertFile:    discovery.CaCertFile,
+		ApiVersion: "v1alpha1",
+		Role:       "node",
+		Kind:       "OutOfBandDiscovery", // TODO NewOutOfBandDiscovery()
 	}
 	params.Discovery = discovery
 
@@ -132,6 +130,10 @@ func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobr
 				out.Write([]byte(fmt.Sprintf("Must specify --api-server-urls (see --help)\n")))
 				return
 			}
+			// At this point we have extracted this data from the user
+			params.ApiServerURLs = discovery.ApiServerURLs
+			params.CaCertFile = discovery.CaCertFile
+
 			err := writeParamsIfNotExists(params)
 			if err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for node:\n%s\n", err)))
