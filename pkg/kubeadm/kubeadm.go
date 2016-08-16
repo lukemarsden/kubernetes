@@ -28,10 +28,17 @@ import (
 // case - they'd need to stop the kubelet, remove the file, and start it again
 // in that case).
 
-const KUBELET_BOOTSTRAP_FILE = "/etc/kubernetes/kubelet-bootstrap.json"
+const KUBELET_BOOTSTRAP_DIR = "/etc/kubernetes"
+const KUBELET_BOOTSTRAP_FILE = KUBELET_BOOTSTRAP_DIR + "/kubelet-bootstrap.json"
 
 func writeParamsIfNotExists(params *BootstrapParams) error {
 	serialized, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+
+	// Create directory if it doesn't exist yet.
+	err = os.MkdirAll(KUBELET_BOOTSTRAP_DIR, 0600)
 	if err != nil {
 		return err
 	}
