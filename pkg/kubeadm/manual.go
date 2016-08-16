@@ -77,7 +77,7 @@ components.`,
 				return err
 			}
 
-			if err := generateAndWritePKIAssets(params); err != nil {
+			if err := generateAndWritePKIAndConfig(params); err != nil {
 				return err
 			}
 			out.Write([]byte(`CA cert is written to XXX. Please scp this to all your nodes before running

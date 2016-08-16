@@ -20,12 +20,17 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
+	"fmt"
 	"net"
 	"os"
 	"path"
 
+	_ "k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
+	clientcmdapi "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api"
 	"k8s.io/kubernetes/pkg/kubeadm/tlsutil"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
+
+	"github.com/ghodss/yaml"
 )
 
 func newCertificateAuthority() (*rsa.PrivateKey, *x509.Certificate, error) {
@@ -117,7 +122,7 @@ func newServiceAccountKey() (*rsa.PrivateKey, error) {
 	return key, err
 }
 
-func generateAndWritePKIAssets(params *BootstrapParams) error {
+func generateAndWritePKIAndConfig(params *BootstrapParams) error {
 	var (
 		err      error
 		altNames tlsutil.AltNames // TODO actual SANs
@@ -164,5 +169,48 @@ func generateAndWritePKIAssets(params *BootstrapParams) error {
 		return err
 	}
 
+	basicConf := createBasicClientConfig("kubernetes", "https://localhost:443", caCert) // TODO pass a real URL and make cluster name an optional parameter, make sure it is mirrored in the control plane
+	admConf := makeClientConfigWithCerts(basicConf, "kubernetes", "admin", admKey, admCert)
+	clientcmdapi.MinifyConfig(admConf)
+
+	admConfYAML, err := yaml.Marshal(admConf)
+	if err != nil {
+		return err
+	}
+
+	err = util.DumpReaderToFile(bytes.NewReader(admConfYAML), path.Join(pkiPath, "admin.conf"))
+	if err != nil {
+		return err
+	}
+
 	return err
+}
+
+func createBasicClientConfig(clusterName string, serverURL string, caCert *x509.Certificate) *clientcmdapi.Config {
+	config := clientcmdapi.NewConfig()
+
+	cluster := clientcmdapi.NewCluster()
+	cluster.Server = serverURL
+	cluster.CertificateAuthorityData = tlsutil.EncodeCertificatePEM(caCert)
+
+	config.Clusters[clusterName] = cluster
+
+	return config
+}
+
+func makeClientConfigWithCerts(config *clientcmdapi.Config, clusterName string, userName string, clientKey *rsa.PrivateKey, clientCert *x509.Certificate) *clientcmdapi.Config {
+	authInfo := clientcmdapi.NewAuthInfo()
+	authInfo.ClientKeyData = tlsutil.EncodePrivateKeyPEM(clientKey)
+	authInfo.ClientCertificateData = tlsutil.EncodeCertificatePEM(clientCert)
+
+	context := clientcmdapi.NewContext()
+	context.Cluster = clusterName
+	context.AuthInfo = userName
+
+	contextName := fmt.Sprintf("%s/%s", clusterName, userName)
+	config.AuthInfos[contextName] = authInfo
+	config.Contexts[contextName] = context
+	config.CurrentContext = contextName
+
+	return config
 }
