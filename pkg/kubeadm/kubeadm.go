@@ -17,9 +17,18 @@ limitations under the License.
 package kubeadm
 
 import (
+	"bytes"
 	"encoding/json"
+	_ "encoding/pem"
 	_ "fmt"
+	"net"
 	"os"
+
+	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/resource"
+	"k8s.io/kubernetes/pkg/kubeadm/tlsutil"
+	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
+	"k8s.io/kubernetes/pkg/util/intstr"
 )
 
 // kubeadm is responsible for writing the following file, which kubelet should
@@ -30,6 +39,7 @@ import (
 
 const KUBELET_BOOTSTRAP_DIR = "/etc/kubernetes"
 const KUBELET_BOOTSTRAP_FILE = KUBELET_BOOTSTRAP_DIR + "/kubelet-bootstrap.json"
+const PKI_PATH = "./pki/" // TODO use a slice and join it
 
 func writeParamsIfNotExists(params *BootstrapParams) error {
 	serialized, err := json.Marshal(params)
