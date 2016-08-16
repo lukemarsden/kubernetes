@@ -44,15 +44,15 @@ certificate to all your servers and specifying and (list of) API server URLs.`,
 		Run: func(cmd *cobra.Command, args []string) {
 		},
 	}
-	cmd.AddCommand(NewCmdManualBootstrapMaster(out, params))
-	cmd.AddCommand(NewCmdManualBootstrapNode(out, params))
+	cmd.AddCommand(NewCmdManualBootstrapInitMaster(out, params))
+	cmd.AddCommand(NewCmdManualBootstrapJoinNode(out, params))
 
 	return cmd
 }
 
-func NewCmdManualBootstrapMaster(out io.Writer, params *BootstrapParams) *cobra.Command {
+func NewCmdManualBootstrapInitMaster(out io.Writer, params *BootstrapParams) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "master",
+		Use:   "init-master",
 		Short: "Manually bootstrap a master 'out-of-band'",
 		Long: `Manually bootstrap a master 'out-of-band'.
 
@@ -82,7 +82,7 @@ components.`,
 			//}
 			out.Write([]byte(`CA cert is written to XXX. Please scp this to all your nodes before running
 'kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert>
---api-server-urls http://<ip-of-master>:8080/`))
+--api-server-urls http://<ip-of-master>:8080/\n`))
 			if err := writeParamsIfNotExists(params); err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for master:\n%s\n", err)))
 			}
@@ -101,10 +101,10 @@ components.`,
 	return cmd
 }
 
-func NewCmdManualBootstrapNode(out io.Writer, params *BootstrapParams) *cobra.Command {
+func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "node",
-		Short: "Manually bootstrap a node 'out-of-band'",
+		Use:   "join-node",
+		Short: "Manually bootstrap a node 'out-of-band', joining it into a cluster with extant control plane",
 
 		Run: func(cmd *cobra.Command, args []string) {
 			err := writeParamsIfNotExists(params)
