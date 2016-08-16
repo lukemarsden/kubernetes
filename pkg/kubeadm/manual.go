@@ -52,7 +52,7 @@ certificate to all your servers and specifying and (list of) API server URLs.`,
 
 func NewCmdManualBootstrapMaster(out io.Writer, params *BootstrapParams) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "node",
+		Use:   "master",
 		Short: "Manually bootstrap a master 'out-of-band'",
 		Long: `Manually bootstrap a master 'out-of-band'.
 
