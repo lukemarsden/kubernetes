@@ -28,9 +28,10 @@ type BootstrapParams struct {
 	// A struct with methods that implement Start() and Discover()
 	// kubeadm will persist this struct to disk and kubelet will read it.
 	Discovery kubelet.Discovery
+	prefixDir string
 }
 
-func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer) *cobra.Command {
+func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer, prefix string) *cobra.Command {
 	cmds := &cobra.Command{
 		Use:   "kubeadm",
 		Short: "kubeadm: bootstrap a secure kubernetes cluster easily.",
@@ -62,7 +63,7 @@ Example usage:
 	// TODO also print the alpha warning when running any commands, as well as
 	// in the help text.
 
-	bootstrapParams := &BootstrapParams{}
+	bootstrapParams := &BootstrapParams{prefixDir: prefix}
 	cmds.AddCommand(NewCmdInit(out, bootstrapParams))
 	cmds.AddCommand(NewCmdJoin(out, bootstrapParams))
 	cmds.AddCommand(NewCmdUser(out, bootstrapParams))

@@ -60,14 +60,29 @@ Will create TLS certificates and set up static pods for Kubernetes master
 components.`,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := writeStaticPodsOnMaster(); err != nil {
+			/*
+
+				api server & controller manager
+				===============================
+				* service_cluster_ip_range - can default to 10.16.0.0/12
+
+				* cloud provider - "fake"
+				* cluster name - "kubernetes"
+				* kubernetes version (for container images) - can deduce?
+				* docker registry, image name ("hyperkube") - can have defaults
+				* secure port - default to 443
+
+			*/
+			if err := writeStaticPodManifests(params); err != nil {
 				return err
 			}
 
-			//TODO if err := generateAndWriteCertificatesOnMaster(params.ApiServerDNSName); err != nil {
-			//	return err
-			//}
-
+			if err := generateAndWritePKIAssets(params); err != nil {
+				return err
+			}
+			out.Write([]byte(`CA cert is written to XXX. Please scp this to all your nodes before running
+    kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert> --api-server-urls http://<ip-of-master>:8080/
+`))
 			if err := writeParamsIfNotExists(params); err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for master:\n%s\n", err)))
 				return nil

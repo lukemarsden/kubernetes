@@ -20,16 +20,13 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
-	_ "encoding/pem"
-	_ "fmt"
 	"net"
 	"os"
+	"path"
 
 	"k8s.io/kubernetes/pkg/kubeadm/tlsutil"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
 )
-
-const PKI_PATH = "./pki/" // TODO use a slice and join it
 
 func newCertificateAuthority() (*rsa.PrivateKey, *x509.Certificate, error) {
 	key, err := tlsutil.NewPrivateKey()
@@ -88,14 +85,14 @@ func newAdminKeyAndCert(caCert *x509.Certificate, caKey *rsa.PrivateKey) (*rsa.P
 	return key, cert, err
 }
 
-func writeKeysAndCert(name string, key *rsa.PrivateKey, cert *x509.Certificate) error {
+func writeKeysAndCert(pkiPath string, name string, key *rsa.PrivateKey, cert *x509.Certificate) error {
 
 	if key != nil {
-		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodePrivateKeyPEM(key)), PKI_PATH+name+"-key.pem"); err != nil {
+		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodePrivateKeyPEM(key)), path.Join(pkiPath, name+"-key.pem")); err != nil {
 			return err
 		}
 		if pubKey, err := tlsutil.EncodePublicKeyPEM(&key.PublicKey); err == nil {
-			if err := util.DumpReaderToFile(bytes.NewReader(pubKey), PKI_PATH+name+"-pub.pem"); err != nil {
+			if err := util.DumpReaderToFile(bytes.NewReader(pubKey), path.Join(pkiPath, name+"-pub.pem")); err != nil {
 				return err
 			}
 		} else {
@@ -104,7 +101,7 @@ func writeKeysAndCert(name string, key *rsa.PrivateKey, cert *x509.Certificate) 
 	}
 
 	if cert != nil {
-		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodeCertificatePEM(cert)), PKI_PATH+name+".pem"); err != nil {
+		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodeCertificatePEM(cert)), path.Join(pkiPath, name+".pem")); err != nil {
 			return err
 		}
 	}
@@ -120,13 +117,14 @@ func newServiceAccountKey() (*rsa.PrivateKey, error) {
 	return key, err
 }
 
-func writetPKIAssets() error {
+func generateAndWritePKIAssets(params *BootstrapParams) error {
 	var (
 		err      error
 		altNames tlsutil.AltNames // TODO actual SANs
 	)
 
-	if err := os.MkdirAll(PKI_PATH, 0700); err != nil {
+	pkiPath := path.Join(params.prefixDir, "pki")
+	if err := os.MkdirAll(pkiPath, 0700); err != nil {
 		return err
 	}
 
@@ -135,7 +133,7 @@ func writetPKIAssets() error {
 		return err
 	}
 
-	if err := writeKeysAndCert("ca", caKey, caCert); err != nil {
+	if err := writeKeysAndCert(pkiPath, "ca", caKey, caCert); err != nil {
 		return err
 	}
 
@@ -144,7 +142,7 @@ func writetPKIAssets() error {
 		return err
 	}
 
-	if err := writeKeysAndCert("apiserver", apiKey, apiCert); err != nil {
+	if err := writeKeysAndCert(pkiPath, "apiserver", apiKey, apiCert); err != nil {
 		return err
 	}
 
@@ -153,7 +151,7 @@ func writetPKIAssets() error {
 		return err
 	}
 
-	if err := writeKeysAndCert("sa", saKey, nil); err != nil {
+	if err := writeKeysAndCert(pkiPath, "sa", saKey, nil); err != nil {
 		return err
 	}
 
@@ -162,7 +160,7 @@ func writetPKIAssets() error {
 		return err
 	}
 
-	if err := writeKeysAndCert("admin", admKey, admCert); err != nil {
+	if err := writeKeysAndCert(pkiPath, "admin", admKey, admCert); err != nil {
 		return err
 	}
 

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	_ "fmt"
 	"os"
+	"path"
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/resource"
@@ -37,10 +38,9 @@ const (
 	CLUSTER_NAME             = "--cluster-name=kubernetes"
 	MASTER                   = "--master=127.0.0.1:8080"
 	HYPERKUBE_IMAGE          = "errordeveloper/hyperquick:master"
-	MANIFESTS                = "./manifests/" // TODO use a slice and join it
 )
 
-func writeStaticPodsOnMaster() error {
+func writeStaticPodManifests(params *BootstrapParams) error {
 	staticPodSpecs := map[string]api.Pod{
 		// TODO this needs a volume
 		"etcd": componentPod(api.Container{
@@ -117,7 +117,8 @@ func writeStaticPodsOnMaster() error {
 		}),
 	}
 
-	if err := os.MkdirAll(MANIFESTS, 0700); err != nil {
+	manifestsPath := path.Join(params.prefixDir, "manifests")
+	if err := os.MkdirAll(manifestsPath, 0700); err != nil {
 		return err
 	}
 	for name, spec := range staticPodSpecs {
@@ -125,7 +126,7 @@ func writeStaticPodsOnMaster() error {
 		if err != nil {
 			return err
 		}
-		if err := util.DumpReaderToFile(bytes.NewReader(serialized), MANIFESTS+name+".json"); err != nil {
+		if err := util.DumpReaderToFile(bytes.NewReader(serialized), path.Join(manifestsPath, name+".json")); err != nil {
 			return err
 		}
 	}

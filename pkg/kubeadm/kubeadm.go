@@ -18,9 +18,8 @@ package kubeadm
 
 import (
 	"encoding/json"
-	_ "encoding/pem"
-	_ "fmt"
 	"os"
+	"path"
 )
 
 // kubeadm is responsible for writing the following file, which kubelet should
@@ -29,9 +28,6 @@ import (
 // case - they'd need to stop the kubelet, remove the file, and start it again
 // in that case).
 
-const KUBELET_BOOTSTRAP_DIR = "/etc/kubernetes"
-const KUBELET_BOOTSTRAP_FILE = KUBELET_BOOTSTRAP_DIR + "/kubelet-bootstrap.json"
-
 func writeParamsIfNotExists(params *BootstrapParams) error {
 	serialized, err := json.Marshal(params)
 	if err != nil {
@@ -39,14 +35,14 @@ func writeParamsIfNotExists(params *BootstrapParams) error {
 	}
 
 	// Create directory if it doesn't exist yet.
-	err = os.MkdirAll(KUBELET_BOOTSTRAP_DIR, 0600)
+	err = os.MkdirAll(params.prefixDir, 0600)
 	if err != nil {
 		return err
 	}
 
 	// Create and open the file, only if it does not already exist.
 	f, err := os.OpenFile(
-		KUBELET_BOOTSTRAP_FILE,
+		path.Join(params.prefixDir, "kubelet-bootstrap.json"),
 		os.O_CREATE|os.O_WRONLY|os.O_EXCL,
 		0600,
 	)
