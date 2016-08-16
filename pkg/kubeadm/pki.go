@@ -128,6 +128,16 @@ func generateAndWritePKIAndConfig(params *BootstrapParams) error {
 		altNames tlsutil.AltNames // TODO actual SANs
 	)
 
+	fmt.Println("disco: %#v", params.Discovery)
+
+	if params.Discovery.ListenIP != "" {
+		altNames.IPs = append(altNames.IPs, net.ParseIP(params.Discovery.ListenIP))
+	}
+
+	if params.Discovery.ApiServerDNSName != "" {
+		altNames.DNSNames = append(altNames.DNSNames, params.Discovery.ApiServerDNSName)
+	}
+
 	pkiPath := path.Join(params.prefixDir, "pki")
 	if err := os.MkdirAll(pkiPath, 0700); err != nil {
 		return err
@@ -169,7 +179,7 @@ func generateAndWritePKIAndConfig(params *BootstrapParams) error {
 		return err
 	}
 
-	basicConf := createBasicClientConfig("kubernetes", "https://localhost:443", caCert) // TODO pass a real URL and make cluster name an optional parameter, make sure it is mirrored in the control plane
+	basicConf := createBasicClientConfig("kubernetes", "https://"+params.Discovery.ListenIP+":443", caCert)
 	admConf := makeClientConfigWithCerts(basicConf, "kubernetes", "admin", admKey, admCert)
 	clientcmdapi.MinifyConfig(admConf)
 

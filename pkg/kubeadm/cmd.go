@@ -30,6 +30,15 @@ type BootstrapParams struct {
 	prefixDir string
 }
 
+type OutOfBandDiscovery struct {
+	// 'join-node' side
+	ApiServerURLs string `json:"apiServerURLs"` // comma separated
+	CaCertFile    string `json:"caCertFile"`
+	// 'init-master' side
+	ApiServerDNSName string `json:"apiServerDNSName"` // optional, used in master bootstrap
+	ListenIP         string `json:"listenIP"`         // optional IP for master to listen on, rather than autodetect
+}
+
 func NewKubeadmCommand(f *cmdutil.Factory, in io.Reader, out, err io.Writer, prefix string) *cobra.Command {
 	cmds := &cobra.Command{
 		Use:   "kubeadm",

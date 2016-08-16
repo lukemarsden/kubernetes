@@ -91,9 +91,13 @@ Kubelet should be able to start soon (try systemctl restart kubelet or equivalen
 CA cert is written to XXX. Please scp this to all your nodes before running:
     kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert> --api-server-urls http://<ip-of-master>:8080/
 `))
+
 			return nil
 		},
 	}
+
+	// XXX Luke, is this where it's supposed to be?
+
 	var discovery *OutOfBandDiscovery
 	discovery = &OutOfBandDiscovery{
 		ApiServerURLs: "http://127.0.0.1:8080/", // On the master, assume you can talk to the API server
@@ -103,15 +107,10 @@ CA cert is written to XXX. Please scp this to all your nodes before running:
 	cmd.PersistentFlags().StringVarP(&discovery.ApiServerDNSName, "api-dns-name", "", "",
 		`(optional) DNS name for the API server, will be encoded into
             subjectAltName in the resulting (generated) TLS certificates`)
+	cmd.PersistentFlags().StringVarP(&discovery.ListenIP, "listen-ip", "", "",
+		`(optional) IP address to listen on, in case autodetection fails.`)
 
 	return cmd
-}
-
-type OutOfBandDiscovery struct {
-	ApiServerURLs    string `json:"apiServerURLs"` // comma separated
-	CaCertFile       string `json:"caCertFile"`
-	ApiServerDNSName string `json:"apiServerDNSName"` // optional, used in master bootstrap
-	ListenIP         string `json:"listenIP"`         // optional IP for master to listen on, rather than autodetect
 }
 
 func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobra.Command {
@@ -148,8 +147,6 @@ Run 'kubectl get nodes' on the master to see it join.
 	cmd.PersistentFlags().StringVarP(&discovery.ApiServerURLs, "api-server-urls", "", "",
 		`Comma separated list of API server URLs. Typically this might be just
             https://<address-of-master>:8080/`)
-	cmd.PersistentFlags().StringVarP(&discovery.ApiServerURLs, "listen-ip", "", "",
-		`(optional) IP address to listen on, in case autodetection fails.`)
 
 	return cmd
 }
