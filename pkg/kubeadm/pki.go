@@ -20,17 +20,14 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
-	"encoding/json"
 	_ "encoding/pem"
 	_ "fmt"
 	"net"
 	"os"
 
 	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/kubeadm/tlsutil"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
-	"k8s.io/kubernetes/pkg/util/intstr"
 )
 
 func newCertificateAuthority() (*rsa.PrivateKey, *x509.Certificate, error) {
