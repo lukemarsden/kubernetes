@@ -169,26 +169,25 @@ func generateAndWritePKIAndConfig(params *BootstrapParams) error {
 		return err
 	}
 
-	admKey, admCert, err := newAdminKeyAndCert(caCert, caKey)
-	if err != nil {
-		return err
-	}
+	basicClientConfig := createBasicClientConfig("kubernetes", "https://"+params.Discovery.ListenIP+":443", caCert)
 
-	if err := writeKeysAndCert(pkiPath, "admin", admKey, admCert); err != nil {
-		return err
-	}
+	for _, client := range []string{"kubelet", "admin"} {
+		key, cert, err := newAdminKeyAndCert(caCert, caKey)
+		if err != nil {
+			return err
+		}
 
-	basicConf := createBasicClientConfig("kubernetes", "https://"+params.Discovery.ListenIP+":443", caCert)
-	admConf := makeClientConfigWithCerts(basicConf, "kubernetes", "admin", admKey, admCert)
+		config := makeClientConfigWithCerts(basicClientConfig, "kubernetes", client, key, cert)
 
-	admConfYAML, err := yaml.Marshal(admConf)
-	if err != nil {
-		return err
-	}
+		configFile, err := yaml.Marshal(config)
+		if err != nil {
+			return err
+		}
 
-	err = util.DumpReaderToFile(bytes.NewReader(admConfYAML), path.Join(pkiPath, "admin.conf"))
-	if err != nil {
-		return err
+		err = util.DumpReaderToFile(bytes.NewReader(configFile), path.Join(params.prefixDir, client+".conf"))
+		if err != nil {
+			return err
+		}
 	}
 
 	return err
@@ -212,7 +211,7 @@ func createBasicClientConfig(clusterName string, serverURL string, caCert *x509.
 
 func makeClientConfigWithCerts(config *clientcmdapi.Config, clusterName string, userName string, clientKey *rsa.PrivateKey, clientCert *x509.Certificate) *clientcmdapi.Config {
 	newConfig := config
-	name := fmt.Sprintf("%s@%s", clusterName, userName)
+	name := fmt.Sprintf("%s@%s", userName, clusterName)
 
 	newConfig.AuthInfos = []clientcmdapi.NamedAuthInfo{
 		{
