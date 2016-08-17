@@ -58,19 +58,6 @@ Will create TLS certificates and set up static pods for Kubernetes master
 components.`,
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			/*
-
-				api server & controller manager
-				===============================
-				* service_cluster_ip_range - can default to 10.16.0.0/12
-
-				* cloud provider - "fake"
-				* cluster name - "kubernetes"
-				* kubernetes version (for container images) - can deduce?
-				* docker registry, image name ("hyperkube") - can have defaults
-				* secure port - default to 443
-
-			*/
 			if err := writeStaticPodManifests(params); err != nil {
 				return err
 			}
@@ -96,28 +83,17 @@ CA cert is written to XXX. Please scp this to all your nodes before running:
 		},
 	}
 
-	// XXX Luke, is this where it's supposed to be?
-
-	var discovery *OutOfBandDiscovery
-	discovery = &OutOfBandDiscovery{
-		ApiServerURLs: "http://127.0.0.1:8080/", // On the master, assume you can talk to the API server
-	}
-	params.Discovery = discovery
-
-	cmd.PersistentFlags().StringVarP(&discovery.ApiServerDNSName, "api-dns-name", "", "",
+	params.Discovery.ApiServerURLs = "http://127.0.0.1:8080/" // On the master, assume you can talk to the API server
+	cmd.PersistentFlags().StringVarP(&params.Discovery.ApiServerDNSName, "api-dns-name", "", "",
 		`(optional) DNS name for the API server, will be encoded into
             subjectAltName in the resulting (generated) TLS certificates`)
-	cmd.PersistentFlags().StringVarP(&discovery.ListenIP, "listen-ip", "", "",
+	cmd.PersistentFlags().StringVarP(&params.Discovery.ListenIP, "listen-ip", "", "",
 		`(optional) IP address to listen on, in case autodetection fails.`)
 
 	return cmd
 }
 
 func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobra.Command {
-	var discovery *OutOfBandDiscovery
-	discovery = &OutOfBandDiscovery{}
-	params.Discovery = discovery
-
 	cmd := &cobra.Command{
 		Use:   "join-node",
 		Short: "Manually bootstrap a node 'out-of-band', joining it into a cluster with extant control plane",
@@ -141,10 +117,10 @@ Run 'kubectl get nodes' on the master to see it join.
 `))
 		},
 	}
-	cmd.PersistentFlags().StringVarP(&discovery.CaCertFile, "ca-cert-file", "", "",
+	cmd.PersistentFlags().StringVarP(&params.Discovery.CaCertFile, "ca-cert-file", "", "",
 		`Path to a CA cert file in PEM format. The same CA cert must be distributed to
             all servers.`)
-	cmd.PersistentFlags().StringVarP(&discovery.ApiServerURLs, "api-server-urls", "", "",
+	cmd.PersistentFlags().StringVarP(&params.Discovery.ApiServerURLs, "api-server-urls", "", "",
 		`Comma separated list of API server URLs. Typically this might be just
             https://<address-of-master>:8080/`)
 

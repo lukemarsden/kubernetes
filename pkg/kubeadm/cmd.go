@@ -71,7 +71,10 @@ Example usage:
 	// TODO also print the alpha warning when running any commands, as well as
 	// in the help text.
 
-	bootstrapParams := &BootstrapParams{prefixDir: prefix}
+	bootstrapParams := &BootstrapParams{
+		Discovery: &OutOfBandDiscovery{},
+		prefixDir: prefix,
+	}
 	cmds.AddCommand(NewCmdInit(out, bootstrapParams))
 	cmds.AddCommand(NewCmdJoin(out, bootstrapParams))
 	cmds.AddCommand(NewCmdUser(out, bootstrapParams))
