@@ -39,6 +39,7 @@ const (
 	CLUSTER_NAME             = "--cluster-name=kubernetes"
 	MASTER                   = "--master=127.0.0.1:8080"
 	HYPERKUBE_IMAGE          = "errordeveloper/hyperquick:master"
+	PKI_HOST_PATH            = "/etc/kubernetes-pki" // TODO this is used for testing, we can parametrised it via an environment variable, or use it for user-suplied PKI...
 )
 
 func writeStaticPodManifests(params *BootstrapParams) error {
@@ -79,13 +80,14 @@ func writeStaticPodManifests(params *BootstrapParams) error {
 				"--allow-privileged",
 				COMPONENT_LOGLEVEL,
 			},
+			VolumeMounts:  []api.VolumeMount{pkiVolumeMount()},
 			LivenessProbe: componentProbe(8080, "/healthz"),
 			Ports: []api.ContainerPort{
 				{Name: "https", ContainerPort: 443, HostPort: 443},
 				{Name: "local", ContainerPort: 8080, HostPort: 8080},
 			},
 			Resources: componentResources("250m"),
-		}),
+		}, pkiVolume()),
 		"kube-controller-manager": componentPod(api.Container{
 			Name:  "kube-controller-manager",
 			Image: HYPERKUBE_IMAGE,
@@ -101,9 +103,10 @@ func writeStaticPodManifests(params *BootstrapParams) error {
 				"--insecure-approve-all-csrs=true",
 				COMPONENT_LOGLEVEL,
 			},
+			VolumeMounts:  []api.VolumeMount{pkiVolumeMount()},
 			LivenessProbe: componentProbe(10252, "/healthz"),
 			Resources:     componentResources("200m"),
-		}),
+		}, pkiVolume()),
 		"kube-scheduler": componentPod(api.Container{
 			Name:  "kube-controller-manager",
 			Image: HYPERKUBE_IMAGE,
@@ -134,6 +137,23 @@ func writeStaticPodManifests(params *BootstrapParams) error {
 	return nil
 }
 
+func pkiVolume() api.Volume {
+	return api.Volume{
+		Name: "pki",
+		VolumeSource: api.VolumeSource{
+			HostPath: &api.HostPathVolumeSource{Path: PKI_HOST_PATH},
+		},
+	}
+}
+
+func pkiVolumeMount() api.VolumeMount {
+	return api.VolumeMount{
+		Name:      "pki",
+		MountPath: "/etc/kubernetes/pki",
+		ReadOnly:  true,
+	}
+}
+
 func componentResources(cpu string) api.ResourceRequirements {
 	return api.ResourceRequirements{
 		Requests: api.ResourceList{
@@ -156,7 +176,7 @@ func componentProbe(port int, path string) *api.Probe {
 	}
 }
 
-func componentPod(container api.Container) api.Pod {
+func componentPod(container api.Container, volumes ...api.Volume) api.Pod {
 	return api.Pod{
 		TypeMeta: unversioned.TypeMeta{
 			APIVersion: "v1",
@@ -170,6 +190,7 @@ func componentPod(container api.Container) api.Pod {
 		Spec: api.PodSpec{
 			Containers:  []api.Container{container},
 			HostNetwork: true,
+			Volumes:     volumes,
 		},
 	}
 }
