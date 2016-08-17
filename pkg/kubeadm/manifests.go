@@ -42,6 +42,11 @@ const (
 	PKI_HOST_PATH            = "/etc/kubernetes-pki" // TODO this is used for testing, we can parametrised it via an environment variable, or use it for user-suplied PKI...
 )
 
+// XXX TODO XXX TODO XXX
+// Looks like we got something worng here, the scheduler crashes with this:
+//
+//E0817 17:53:22.242658       1 event.go:258] Could not construct reference to: '&api.Endpoints{TypeMeta:unversioned.TypeMeta{Kind:"", APIVersion:""}, ObjectMeta:api.ObjectMeta{Name:"kube-scheduler", GenerateName:"", Namespace:"kube-system", SelfLink:"", UID:"", ResourceVersion:"", Generation:0, CreationTimestamp:unversioned.Time{Time:time.Time{sec:0, nsec:0, loc:(*time.Location)(nil)}}, DeletionTimestamp:(*unversioned.Time)(nil), DeletionGracePeriodSeconds:(*int64)(nil), Labels:map[string]string(nil), Annotations:map[string]string(nil), OwnerReferences:[]api.OwnerReference(nil), Finalizers:[]string(nil)}, Subsets:[]api.EndpointSubset(nil)}' due to: 'selfLink was empty, can't make reference'. Will not report event: 'Normal' '%v became leader' 'moby'
+
 func writeStaticPodManifests(params *BootstrapParams) error {
 	staticPodSpecs := map[string]api.Pod{
 		// TODO this needs a volume
