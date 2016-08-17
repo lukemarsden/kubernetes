@@ -181,7 +181,6 @@ func generateAndWritePKIAndConfig(params *BootstrapParams) error {
 
 	basicConf := createBasicClientConfig("kubernetes", "https://"+params.Discovery.ListenIP+":443", caCert)
 	admConf := makeClientConfigWithCerts(basicConf, "kubernetes", "admin", admKey, admCert)
-	clientcmdapi.MinifyConfig(admConf)
 
 	admConfYAML, err := yaml.Marshal(admConf)
 	if err != nil {
