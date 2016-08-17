@@ -25,6 +25,7 @@ import (
 
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/resource"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/util/intstr"
 )
@@ -157,6 +158,10 @@ func componentProbe(port int, path string) *api.Probe {
 
 func componentPod(container api.Container) api.Pod {
 	return api.Pod{
+		TypeMeta: unversioned.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Pod",
+		},
 		ObjectMeta: api.ObjectMeta{
 			Name:      container.Name,
 			Namespace: "kube-system",
