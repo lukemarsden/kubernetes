@@ -99,11 +99,11 @@ func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobr
 		Short: "Manually bootstrap a node 'out-of-band', joining it into a cluster with extant control plane",
 
 		Run: func(cmd *cobra.Command, args []string) {
-			if discovery.CaCertFile == "" {
+			if params.Discovery.CaCertFile == "" {
 				out.Write([]byte(fmt.Sprintf("Must specify --ca-cert-file (see --help)\n")))
 				return
 			}
-			if discovery.ApiServerURLs == "" {
+			if params.Discovery.ApiServerURLs == "" {
 				out.Write([]byte(fmt.Sprintf("Must specify --api-server-urls (see --help)\n")))
 				return
 			}
