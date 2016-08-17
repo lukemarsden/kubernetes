@@ -24,8 +24,8 @@ import (
 )
 
 type BootstrapParams struct {
-	// A struct with methods that implement Start() and Discover()
-	// kubeadm will persist this struct to disk and kubelet will read it.
+	// A struct with methods that implement Discover()
+	// kubeadm will do the CSR dance
 	Discovery *OutOfBandDiscovery
 	prefixDir string
 }
@@ -66,6 +66,8 @@ Example usage:
     On the second machine
     =====================
     node# kubeadm join node --token=<token> <ip-of-master>
+
+	You can then repeat the second step on as many other machines as you like.
 `,
 	}
 	// TODO also print the alpha warning when running any commands, as well as

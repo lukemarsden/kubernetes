@@ -112,7 +112,7 @@ func NewCmdManualBootstrapJoinNode(out io.Writer, params *BootstrapParams) *cobr
 				out.Write([]byte(fmt.Sprintf("Unable to write config for node:\n%s\n", err)))
 				return
 			}
-			out.Write([]byte(`Kubelet started with given arguments, it should attempt TLS bootstrap now.
+			out.Write([]byte(`Kubelet informed of new config.
 Run 'kubectl get nodes' on the master to see it join.
 `))
 		},
