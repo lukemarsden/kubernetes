@@ -25,8 +25,7 @@ import (
 	"os"
 	"path"
 
-	_ "k8s.io/kubernetes/pkg/client/unversioned/clientcmd"
-	clientcmdapi "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api"
+	clientcmdapi "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api/v1" // TODO: "k8s.io/client-go/client/tools/clientcmd/api"
 	"k8s.io/kubernetes/pkg/kubeadm/tlsutil"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
 
@@ -196,30 +195,46 @@ func generateAndWritePKIAndConfig(params *BootstrapParams) error {
 }
 
 func createBasicClientConfig(clusterName string, serverURL string, caCert *x509.Certificate) *clientcmdapi.Config {
-	config := clientcmdapi.NewConfig()
-
-	cluster := clientcmdapi.NewCluster()
-	cluster.Server = serverURL
-	cluster.CertificateAuthorityData = tlsutil.EncodeCertificatePEM(caCert)
-
-	config.Clusters[clusterName] = cluster
+	config := &clientcmdapi.Config{
+		Clusters: []clientcmdapi.NamedCluster{
+			{
+				Name: clusterName,
+				Cluster: clientcmdapi.Cluster{
+					Server: serverURL,
+					CertificateAuthorityData: tlsutil.EncodeCertificatePEM(caCert),
+				},
+			},
+		},
+	}
 
 	return config
 }
 
 func makeClientConfigWithCerts(config *clientcmdapi.Config, clusterName string, userName string, clientKey *rsa.PrivateKey, clientCert *x509.Certificate) *clientcmdapi.Config {
-	authInfo := clientcmdapi.NewAuthInfo()
-	authInfo.ClientKeyData = tlsutil.EncodePrivateKeyPEM(clientKey)
-	authInfo.ClientCertificateData = tlsutil.EncodeCertificatePEM(clientCert)
+	newConfig := config
+	name := fmt.Sprintf("%s@%s", clusterName, userName)
 
-	context := clientcmdapi.NewContext()
-	context.Cluster = clusterName
-	context.AuthInfo = userName
+	newConfig.AuthInfos = []clientcmdapi.NamedAuthInfo{
+		{
+			Name: userName,
+			AuthInfo: clientcmdapi.AuthInfo{
+				ClientKeyData:         tlsutil.EncodePrivateKeyPEM(clientKey),
+				ClientCertificateData: tlsutil.EncodeCertificatePEM(clientCert),
+			},
+		},
+	}
 
-	contextName := fmt.Sprintf("%s/%s", clusterName, userName)
-	config.AuthInfos[contextName] = authInfo
-	config.Contexts[contextName] = context
-	config.CurrentContext = contextName
+	newConfig.Contexts = []clientcmdapi.NamedContext{
+		{
+			Name: name,
+			Context: clientcmdapi.Context{
+				Cluster:  clusterName,
+				AuthInfo: userName,
+			},
+		},
+	}
 
-	return config
+	newConfig.CurrentContext = name
+
+	return newConfig
 }
