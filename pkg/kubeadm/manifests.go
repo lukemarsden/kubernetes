@@ -23,9 +23,9 @@ import (
 	"os"
 	"path"
 
-	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/api/unversioned"
+	api "k8s.io/kubernetes/pkg/api/v1"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/util/intstr"
 )
@@ -168,8 +168,8 @@ func componentPod(container api.Container) api.Pod {
 			Labels:    map[string]string{"component": container.Name, "tier": "control-plane"},
 		},
 		Spec: api.PodSpec{
-			Containers:      []api.Container{container},
-			SecurityContext: &api.PodSecurityContext{HostNetwork: true},
+			Containers:  []api.Container{container},
+			HostNetwork: true,
 		},
 	}
 }
