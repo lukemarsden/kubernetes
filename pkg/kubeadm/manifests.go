@@ -108,7 +108,7 @@ func writeStaticPodManifests(params *BootstrapParams) error {
 			Resources:     componentResources("200m"),
 		}, pkiVolume()),
 		"kube-scheduler": componentPod(api.Container{
-			Name:  "kube-controller-manager",
+			Name:  "kube-scheduler",
 			Image: HYPERKUBE_IMAGE,
 			Command: []string{
 				"/hyperkube",
