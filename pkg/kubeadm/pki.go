@@ -56,12 +56,12 @@ func newAPIKeyAndCert(caCert *x509.Certificate, caKey *rsa.PrivateKey, altNames 
 		return nil, nil, err
 	}
 	altNames.IPs = append(altNames.IPs, net.ParseIP("10.3.0.1"))
-	altNames.DNSNames = append(altNames.DNSNames, []string{
+	altNames.DNSNames = append(altNames.DNSNames,
 		"kubernetes",
 		"kubernetes.default",
 		"kubernetes.default.svc",
 		"kubernetes.default.svc.cluster.local",
-	}...)
+	)
 
 	config := tlsutil.CertConfig{
 		CommonName: "kube-apiserver",
@@ -90,7 +90,6 @@ func newAdminKeyAndCert(caCert *x509.Certificate, caKey *rsa.PrivateKey) (*rsa.P
 }
 
 func writeKeysAndCert(pkiPath string, name string, key *rsa.PrivateKey, cert *x509.Certificate) error {
-
 	if key != nil {
 		if err := util.DumpReaderToFile(bytes.NewReader(tlsutil.EncodePrivateKeyPEM(key)), path.Join(pkiPath, name+"-key.pem")); err != nil {
 			return err

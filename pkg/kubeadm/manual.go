@@ -65,19 +65,16 @@ components.`,
 			if err := generateAndWritePKIAndConfig(params); err != nil {
 				return err
 			}
-			out.Write([]byte(`CA cert is written to XXX. Please scp this to all your nodes before running
-    kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert> --api-server-urls http://<ip-of-master>:8080/
-`))
 			if err := writeKubeconfigIfNotExists(params); err != nil {
 				out.Write([]byte(fmt.Sprintf("Unable to write config for master:\n%s\n", err)))
 				return nil
 			}
 
-			out.Write([]byte(`Static pods written and kubelet's kubeconfig written.
-Kubelet should be able to start soon (try systemctl restart kubelet or equivalent if it doesn't).
-CA cert is written to XXX. Please scp this to all your nodes before running:
-    kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert> --api-server-urls http://<ip-of-master>:8080/
-`))
+			out.Write([]byte(fmt.Sprintf(`Static pods written and kubelet's kubeconfig written.
+Kubelet should be able to start soon (try 'systemctl restart kubelet' or equivalent if it doesn't).
+CA cert is written to /etc/kubernetes/pki/ca.pem. Please scp this to all your nodes and then run on them:
+    kubeadm manual bootstrap node --ca-cert-file <path-to-ca-cert> --api-server-urls https://%s:443/
+`, params.Discovery.ListenIP)))
 
 			return nil
 		},
